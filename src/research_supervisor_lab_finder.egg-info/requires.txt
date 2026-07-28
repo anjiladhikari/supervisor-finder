@@ -1,0 +1,7 @@
+langgraph
+pydantic
+pydantic-settings
+
+[dev]
+pytest
+ruff

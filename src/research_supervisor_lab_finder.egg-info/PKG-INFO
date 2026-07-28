@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: research-supervisor-lab-finder
+Version: 0.1.0
+Summary: An evidence-based AI workflow for finding research supervisors and labs.
+Requires-Python: <3.13,>=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: langgraph
+Requires-Dist: pydantic
+Requires-Dist: pydantic-settings
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
