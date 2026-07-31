@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -17,9 +17,10 @@ from research_finder.models import (
     VerificationStatus,
 )
 
+
 def test_search_request_normalize_input()-> None:
     request = SearchRequest(
-        country=" austrlia ",
+        country=" australia ",
         state="vic",
       research_topic="  reinforcement   learning for time-series data  ",
     )
@@ -29,7 +30,7 @@ def test_search_request_normalize_input()-> None:
         request.research_topic== "reinforcement learning for time-series data"
 
     )
-    assert request.max_result==5
+    assert request.max_results==5
 
 def test_search_request_rejects_unsupported_country() -> None:
     with pytest.raises(ValidationError):
@@ -82,7 +83,7 @@ def test_valid_researcher_result() -> None:
 
     publication = Publication(
         title="Reinforcement Learning for Early Time-Series Decisions",
-        year=date.today().year,
+        year= datetime.now(UTC).year,
         venue="Example Conference",
         url="https://example.edu.au/publication",
         relevance_reason=(
