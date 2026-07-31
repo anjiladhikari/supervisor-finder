@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import date,datetime,timezone
 from enum import StrEnum
 from typing import Literal 
-
+# StrEnum    → defines fixed string options
+# Literal    → allows only one or several exact values
 from pydantic import(
 
     BaseModel,
@@ -292,3 +293,31 @@ class SearchResponse(StrictModel):
 
         return len(self.results)
 
+# ResearcherResult
+# │
+# ├── Basic researcher information
+# │   ├── researcher_name
+# │   ├── university_name
+# │   └── lab_or_group_name
+# │
+# ├── Research information
+# │   ├── general_research_interests
+# │   ├── current_projects ──────→ list[ResearchProject]
+# │   ├── previous_projects ─────→ list[ResearchProject]
+# │   └── relevant_publications ─→ list[Publication]
+# │
+# ├── Matching information
+# │   ├── match_explanation
+# │   └── relevance_score ───────→ RelevanceScore
+# │
+# ├── Contact and links
+# │   ├── official_profile_url
+# │   ├── lab_or_group_url
+# │   └── public_email
+# │
+# └── Verification
+#     ├── current_affiliation_verified
+#     ├── verification_status
+#     ├── verification_notes
+#     ├── verified_on
+#     └── sources ───────────────→ list[EvidenceSource]
