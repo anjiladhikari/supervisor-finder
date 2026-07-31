@@ -55,11 +55,26 @@ Project foundation created. Search and LLM functionality have not yet been imple
 
 The LLM provider will be configurable so the project can support Groq,
 Ollama or another compatible provider.
+## Data-model design
+
+The application uses Pydantic models for:
+
+- User search requests
+- Researchers
+- Research projects
+- Publications
+- Evidence sources
+- Verification status
+- Explainable relevance scoring
+- Final search responses
+
+Unknown information is represented explicitly rather than invented.
+Every researcher result must include at least one supporting source.
 
 ## Development status
 
 - [x] Project foundation
-- [ ] Input and output models
+- [x] Input and output models
 - [ ] LangGraph state
 - [ ] Input-validation node
 - [ ] Topic-expansion node
