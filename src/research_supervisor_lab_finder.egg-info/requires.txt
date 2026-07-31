@@ -1,5 +1,5 @@
 langgraph
-pydantic
+pydantic[email]
 pydantic-settings
 
 [dev]
