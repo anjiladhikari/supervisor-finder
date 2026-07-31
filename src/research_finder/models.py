@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from datetime import date,datetime,timezone
+from datetime import UTC, date, datetime
 from enum import StrEnum
-from typing import Literal 
+from typing import Literal
+
 # StrEnum    → defines fixed string options
 # Literal    → allows only one or several exact values
-from pydantic import(
-
+from pydantic import (
     BaseModel,
     ConfigDict,
     EmailStr,
     Field,
     HttpUrl,
     computed_field,
-    filed_validator,
-    model_validator
-
+    field_validator,
+    model_validator,
 )
+
 
 class StrictModel(BaseModel):
     """Base configuration shared by application model."""
@@ -85,7 +85,7 @@ class ProjectStatus(StrEnum):
 
 
 class SearchRequest(StrictModel):
-    """vlidate input submitted by the user"""
+    """validate input submitted by the user"""
     country:Literal["Australia"]="Australia"
     state: AustralianState | None = None 
     research_topic: str=Field(min_length=3,max_length=300)
@@ -95,7 +95,7 @@ class SearchRequest(StrictModel):
     @classmethod
     def normalize_country(cls,value:object)->object:
         """accept different capitalisation while allowing australia only."""
-        if isinstance(value,str) and value.strip.casefold()=="australia":
+        if isinstance(value,str) and value.strip().casefold()=="australia":
             return "Australia"
         return value
 
@@ -156,7 +156,7 @@ class ResearchProject(StrictModel):
     def validate_project_dates(self) -> ResearchProject:
         """Ensure that project dates follow a sensible order."""
 
-        current_year = date.today().year
+        current_year = datetime.now(UTC).year
 
         if self.start_year is not None and self.start_year > current_year + 1:
             raise ValueError("Project start year cannot be far in the future.")
@@ -188,7 +188,7 @@ class Publication(StrictModel):
     def validate_publication_year(cls, value: int | None) -> int | None:
         """Prevent clearly impossible future publication years."""
 
-        if value is not None and value > date.today().year + 1:
+        if value is not None and value > datetime.now(UTC).year+ 1:
             raise ValueError("Publication year cannot be far in the future.")
 
         return value
@@ -283,7 +283,7 @@ class SearchResponse(StrictModel):
     results: list[ResearcherResult] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now(UTC)
     )
 
     @computed_field
