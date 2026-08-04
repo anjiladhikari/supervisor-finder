@@ -1,4 +1,7 @@
 langgraph
+langchain-core
+langchain-groq
+langchain-ollama
 pydantic[email]
 pydantic-settings
 

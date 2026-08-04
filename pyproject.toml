@@ -9,12 +9,12 @@ description = "An evidence-based AI workflow for finding research supervisors an
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "langgraph",
+   "langgraph",
     "langchain-core",
     "langchain-groq",
     "langchain-ollama",
     "pydantic[email]",
-    "pydantic-settings",
+    "pydantic-settings"
 ]
 
 [project.optional-dependencies]
