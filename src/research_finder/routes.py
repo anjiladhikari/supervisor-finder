@@ -19,7 +19,7 @@ def route_after_validation(
 
 def route_after_university_discovery(
     state: ResearchGraphState,
-) -> Literal["search_researchers", "generate_final_output"]:
+) -> Literal["generate_search_queries", "generate_final_output"]:
     """Continue only when at least one university has been found."""
 
     candidate_universities = state.get("candidate_universities", [])
@@ -28,4 +28,4 @@ def route_after_university_discovery(
     if errors or not candidate_universities:
         return "generate_final_output"
 
-    return "search_researchers"
+    return "generate_search_queries"
