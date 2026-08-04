@@ -1,7 +1,12 @@
 from pydantic import ValidationError
 
+from research_finder.llm import create_chat_model
 from research_finder.models import SearchRequest, SearchResponse
 from research_finder.state import ResearchGraphState
+from research_finder.topic_expansion import (
+    create_fallback_topic_expansion,
+    generate_topic_expansion,
+)
 
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
@@ -9,6 +14,7 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
 
     return {
         "request": None,
+        "topic_expansion":None,
         "expanded_topics": [],
         "candidate_universities": [],
         "researcher_pages": [],
@@ -66,7 +72,7 @@ def validate_input(state: ResearchGraphState) -> dict[str, object]:
 def expand_research_topic(
     state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Temporarily use only the original topic until LLM expansion is added."""
+    """Generate structured research-topic search vocabulary."""
 
     request = state.get("request")
 
@@ -78,18 +84,46 @@ def expand_research_topic(
             "execution_log": ["Topic expansion failed."],
         }
 
+    try:
+        model = create_chat_model()
+        expansion = generate_topic_expansion(
+            request=request,
+            model=model,
+        )
+    except Exception as error:
+        fallback_expansion = (
+            create_fallback_topic_expansion(request)
+        )
+
+        return {
+            "topic_expansion": fallback_expansion,
+            "expanded_topics": (
+                fallback_expansion.to_search_terms()
+            ),
+            "warnings": [
+                (
+                    "Structured LLM topic expansion was unavailable "
+                    f"({type(error).__name__}); the original "
+                    "research topic was used."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Topic expansion completed with "
+                    "deterministic fallback."
+                )
+            ],
+        }
+
     return {
-        "expanded_topics": [request.research_topic],
-        "warnings": [
-            "LLM topic expansion is not implemented yet; "
-            "the original research topic was used."
-        ],
+        "topic_expansion": expansion,
+        "expanded_topics": expansion.to_search_terms(),
         "execution_log": [
-            "Topic-expansion placeholder completed."
+            "Structured topic expansion completed."
         ],
     }
 
-    
+
 def find_universities(
     _: ResearchGraphState,
 ) -> dict[str, object]:
