@@ -8,7 +8,6 @@ from research_finder.models import (
     TopicExpansionDraft,
 )
 
-
 TOPIC_EXPANSION_SYSTEM_PROMPT = """
 You create compact research-topic expansions for an evidence-based
 Australian university researcher-discovery system.
