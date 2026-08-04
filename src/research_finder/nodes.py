@@ -1,6 +1,10 @@
 from pydantic import ValidationError
 
 from research_finder.llm import create_chat_model
+from research_finder.location import (
+    LocationLookupError,
+    resolve_location,
+)
 from research_finder.models import SearchRequest, SearchResponse
 from research_finder.state import ResearchGraphState
 from research_finder.topic_expansion import (
@@ -8,10 +12,7 @@ from research_finder.topic_expansion import (
     generate_topic_expansion,
 )
 
-from research_finder.location import (
-    LocationLookupError,
-    resolve_location,
-)
+
 from research_finder.university_directory import (
     UniversityDirectoryError,
     get_universities,

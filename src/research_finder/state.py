@@ -7,9 +7,8 @@ from research_finder.models import (
     SearchResponse,
     TopicExpansion,
 )
-from research_finder.university_directory import (
-    UniversityRecord,
-)
+from research_finder.university_directory import UniversityRecord
+
 
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
