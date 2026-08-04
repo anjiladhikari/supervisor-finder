@@ -83,11 +83,7 @@ class OfficialSearchQuery(StrictModel):
         """Normalise the official root domain."""
 
         if isinstance(value, str):
-            return (
-                value.strip()
-                .casefold()
-                .removeprefix("www.")
-            )
+            return value.strip().casefold().removeprefix("www.")
 
         return value
 
@@ -97,44 +93,26 @@ class OfficialSearchQuery(StrictModel):
     ) -> OfficialSearchQuery:
         """Ensure the query starts with its official domain."""
 
-        expected_prefix = (
-            f"site:{self.official_domain} "
-        )
+        expected_prefix = f"site:{self.official_domain} "
 
-        if not self.query.casefold().startswith(
-            expected_prefix.casefold()
-        ):
-            raise ValueError(
-                "query must begin with the official "
-                "university domain."
-            )
+        if not self.query.casefold().startswith(expected_prefix.casefold()):
+            raise ValueError("query must begin with the official university domain.")
 
         return self
 
 
 _TARGET_CLAUSES = {
-    SearchTarget.RESEARCHER: (
-        "(researcher OR professor OR academic OR staff)"
-    ),
-    SearchTarget.LAB: (
-        '("research group" OR "research lab" '
-        "OR laboratory)"
-    ),
-    SearchTarget.PROJECT: (
-        "(project OR grant OR funded)"
-    ),
-    SearchTarget.PUBLICATION: (
-        "(publication OR paper OR journal)"
-    ),
+    SearchTarget.RESEARCHER: ("(researcher OR professor OR academic OR staff)"),
+    SearchTarget.LAB: ('("research group" OR "research lab" OR laboratory)'),
+    SearchTarget.PROJECT: ("(project OR grant OR funded)"),
+    SearchTarget.PUBLICATION: ("(publication OR paper OR journal)"),
 }
 
 
 def _clean_topic(topic: str) -> str:
     """Clean a topic before placing it inside quotes."""
 
-    return " ".join(
-        topic.replace('"', "").split()
-    )
+    return " ".join(topic.replace('"', "").split())
 
 
 def select_query_topics(
@@ -176,41 +154,27 @@ def build_official_search_query(
     selected_topics = select_query_topics(topics)
 
     if not selected_topics:
-        raise ValueError(
-            "At least one research topic is required."
-        )
+        raise ValueError("At least one research topic is required.")
 
     if len(selected_topics) == 1:
         topic_clause = f'"{selected_topics[0]}"'
     else:
-        topic_clause = (
-            f'("{selected_topics[0]}" OR '
-            f'"{selected_topics[1]}")'
-        )
+        topic_clause = f'("{selected_topics[0]}" OR "{selected_topics[1]}")'
 
     target_clause = _TARGET_CLAUSES[target]
 
-    query = (
-        f"site:{university.official_domain} "
-        f"{topic_clause} {target_clause}"
-    )
+    query = f"site:{university.official_domain} {topic_clause} {target_clause}"
 
     # A single topic always fits the Step 7
     # WebSearchRequest maximum more safely.
     if len(query) > 500:
         selected_topics = selected_topics[:1]
 
-        query = (
-            f"site:{university.official_domain} "
-            f'"{selected_topics[0]}" '
-            f"{target_clause}"
-        )
+        query = f'site:{university.official_domain} "{selected_topics[0]}" {target_clause}'
 
     return OfficialSearchQuery(
         university_name=university.name,
-        official_domain=(
-            university.official_domain
-        ),
+        official_domain=(university.official_domain),
         target=target,
         topics=selected_topics,
         query=query,

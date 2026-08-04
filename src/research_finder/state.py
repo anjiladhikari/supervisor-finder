@@ -8,6 +8,7 @@ from research_finder.models import (
     TopicExpansion,
 )
 from research_finder.university_directory import UniversityRecord
+from research_finder.search_queries import (OfficialSearchQuery,)
 
 
 class WorkflowMessages(TypedDict, total=False):
@@ -40,6 +41,7 @@ class ResearchGraphState(WorkflowMessages, total=False):
     expanded_topics: list[str]
 
     candidate_universities: list[UniversityRecord]
+    search_queries: list[OfficialSearchQuery]
 
     researcher_pages: list[str]
     lab_pages: list[str]
