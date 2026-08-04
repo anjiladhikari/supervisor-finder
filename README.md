@@ -105,20 +105,23 @@ information.
 
 ## Development status
 
-* [x] Project foundation
-* [x] Input and output models
-* [x] LangGraph state
-* [x] Input-validation node
-* [x] Initial LangGraph workflow skeleton
-* [x] Conditional validation routing
-* [x] Safe empty-result behaviour
-* [ ] LLM topic-expansion node
-* [ ] University discovery
-* [ ] Search integration
-* [ ] Evidence extraction
-* [ ] Current-affiliation verification
-* [ ] Deterministic relevance scoring
-* [ ] Duplicate-removal tests with real results
-* [ ] Streamlit interface
-* [ ] SQLite persistence
-* [ ] Docker deployment
+- [x] Project foundation
+- [x] Input and output models
+- [x] LangGraph state
+- [x] Input-validation node
+- [x] Initial LangGraph workflow skeleton
+- [x] Conditional validation routing
+- [x] Safe empty-result behaviour
+- [x] Configurable cloud LLM settings
+- [x] Groq API provider
+- [x] Ollama Cloud API provider
+- [x] Manual API connection check
+- [ ] Structured topic-expansion node
+- [ ] Australian university directory
+- [ ] Search integration
+- [ ] Evidence extraction
+- [ ] Current-affiliation verification
+- [ ] Deterministic relevance scoring
+- [ ] Streamlit interface
+- [ ] SQLite persistence
+- [ ] Docker deployment
