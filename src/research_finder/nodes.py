@@ -6,6 +6,9 @@ from research_finder.location import (
     resolve_location,
 )
 from research_finder.models import SearchRequest, SearchResponse
+from research_finder.search_queries import (
+    generate_official_search_queries,
+)
 from research_finder.state import ResearchGraphState
 from research_finder.topic_expansion import (
     create_fallback_topic_expansion,
@@ -15,9 +18,6 @@ from research_finder.university_directory import (
     UniversityDirectoryError,
     get_universities,
     supports_country,
-)
-from research_finder.search_queries import (
-    generate_official_search_queries,
 )
 
 

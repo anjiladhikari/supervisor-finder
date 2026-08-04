@@ -7,8 +7,10 @@ from research_finder.models import (
     SearchResponse,
     TopicExpansion,
 )
+from research_finder.search_queries import (
+    OfficialSearchQuery,
+)
 from research_finder.university_directory import UniversityRecord
-from research_finder.search_queries import (OfficialSearchQuery,)
 
 
 class WorkflowMessages(TypedDict, total=False):
