@@ -24,8 +24,8 @@ def main() -> None:
         [
             (
                 "system",
-                "You are performing an API connection test. "
-                "Reply briefly and do not add an explanation.",
+                ("You are performing an API connection test. "
+                "Reply briefly and do not add an explanation."),
             ),
             (
                 "human",

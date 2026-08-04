@@ -116,8 +116,12 @@ information.
 - [x] Groq API provider
 - [x] Ollama Cloud API provider
 - [x] Manual API connection check
-- [ ] Structured topic-expansion node
-- [ ] Australian university directory
+- [x] Structured topic-expansion models
+- [x] Structured topic-expansion service
+- [x] Real topic-expansion LangGraph node
+- [x] Deterministic topic-expansion fallback
+- [x] Topic-expansion unit tests
+- [ ] Australian university and state directory
 - [ ] Search integration
 - [ ] Evidence extraction
 - [ ] Current-affiliation verification
