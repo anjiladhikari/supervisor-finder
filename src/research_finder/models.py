@@ -40,24 +40,7 @@ class AustralianState(StrEnum):
     WESTERN_AUSTRALIA = "Western Australia"
 
 
-STATE_ALIASES: dict[str, AustralianState] = {
-    "act": AustralianState.AUSTRALIAN_CAPITAL_TERRITORY,
-    "australian capital territory": AustralianState.AUSTRALIAN_CAPITAL_TERRITORY,
-    "nsw": AustralianState.NEW_SOUTH_WALES,
-    "new south wales": AustralianState.NEW_SOUTH_WALES,
-    "nt": AustralianState.NORTHERN_TERRITORY,
-    "northern territory": AustralianState.NORTHERN_TERRITORY,
-    "qld": AustralianState.QUEENSLAND,
-    "queensland": AustralianState.QUEENSLAND,
-    "sa": AustralianState.SOUTH_AUSTRALIA,
-    "south australia": AustralianState.SOUTH_AUSTRALIA,
-    "tas": AustralianState.TASMANIA,
-    "tasmania": AustralianState.TASMANIA,
-    "vic": AustralianState.VICTORIA,
-    "victoria": AustralianState.VICTORIA,
-    "wa": AustralianState.WESTERN_AUSTRALIA,
-    "western australia": AustralianState.WESTERN_AUSTRALIA,
-}
+
 
 
 class SourceType(StrEnum):
@@ -86,49 +69,100 @@ class ProjectStatus(StrEnum):
 
 
 class SearchRequest(StrictModel):
-    """validate input submitted by the user"""
-    country:Literal["Australia"]="Australia"
-    state: AustralianState | None = None 
-    research_topic: str=Field(min_length=3,max_length=300)
-    max_results: int=Field(default=5,ge=1,le=20)
+    """Validated research-supervisor search input."""
 
-    @field_validator("country",mode="before")
+    country: str = Field(
+        min_length=2,
+        max_length=100,
+    )
+    country_code: str = Field(
+        min_length=2,
+        max_length=2,
+        pattern=r"^[A-Z]{2}$",
+    )
+
+    state: str | None = Field(
+        default=None,
+        max_length=150,
+    )
+    state_code: str | None = Field(
+        default=None,
+        pattern=r"^[A-Z]{2}-[A-Z0-9]{1,3}$",
+    )
+
+    research_topic: str = Field(
+        min_length=3,
+        max_length=300,
+    )
+    max_results: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+    )
+
+    @field_validator(
+        "country",
+        "state",
+        "research_topic",
+        mode="before",
+    )
     @classmethod
-    def normalize_country(cls,value:object)->object:
-        """accept different capitalisation while allowing australia only."""
-        if isinstance(value,str) and value.strip().casefold()=="australia":
-            return "Australia"
-        return value
-
-    @field_validator("state",mode="before")
-    @classmethod
-    def normalise_state(cls,value:object)->object:
-        """convert state abbreviations and name to one standard value."""
-        if value is None or isinstance(value,AustralianState):
-            return value
-
-        if not isinstance(value,str):
-            return value
-
-        cleaned_value=" ".join(value.split()).casefold()
-
-        if not cleaned_value:
-            return None
-
-        return STATE_ALIASES.get(cleaned_value,None)
-
-
-    @field_validator("research_topic", mode="before")
-    @classmethod
-    def normalise_research_topic(cls, value: object) -> object:
-        """Remove unnecessary repeated whitespace from the topic."""
+    def normalise_text(
+        cls,
+        value: object,
+    ) -> object:
+        """Remove repeated whitespace."""
 
         if isinstance(value, str):
-            return " ".join(value.split())
+            cleaned_value = " ".join(value.split())
+
+            if not cleaned_value:
+                return None
+
+            return cleaned_value
 
         return value
 
+    @field_validator(
+        "country_code",
+        "state_code",
+        mode="before",
+    )
+    @classmethod
+    def normalise_location_codes(
+        cls,
+        value: object,
+    ) -> object:
+        """Convert ISO location codes to uppercase."""
 
+        if isinstance(value, str):
+            return value.strip().upper()
+
+        return value
+
+    @model_validator(mode="after")
+    def validate_state_values(self) -> SearchRequest:
+        """Require state name and code together."""
+
+        if (self.state is None) != (
+            self.state_code is None
+        ):
+            raise ValueError(
+                "state and state_code must both be "
+                "present or both be absent."
+            )
+
+        if (
+            self.state_code is not None
+            and not self.state_code.startswith(
+                f"{self.country_code}-"
+            )
+        ):
+            raise ValueError(
+                "state_code must belong to country_code."
+            )
+
+        return self
 
 class TopicExpansionDraft(StrictModel):
     """structured topic expansion produced by the LLM."""
@@ -434,7 +468,7 @@ class AustralianUniversity(StrictModel):
 
         return self
 
-        
+
 class EvidenceSource(StrictModel):
     """A source that supports one or more claims about a researcher."""
 
