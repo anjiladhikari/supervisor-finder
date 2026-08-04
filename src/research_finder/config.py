@@ -18,6 +18,11 @@ class LLMProvider(StrEnum):
     GROQ = "groq"
     OLLAMA = "ollama"
 
+class SearchSafeSearch(StrEnum):
+    """safe search levels accepted by the search provider."""
+    ON="on"
+    MODERATE="moderate"
+    OFF="off"
 
 class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
