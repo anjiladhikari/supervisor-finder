@@ -1,7 +1,7 @@
-from langgraph.graph import END,START, StateGraph
+from langgraph.graph import END, START, StateGraph
 
-from research_finder.nodes import(
- expand_research_topic,
+from research_finder.nodes import (
+    expand_research_topic,
     find_universities,
     generate_final_output,
     initialize_workflow,
@@ -15,7 +15,6 @@ from research_finder.nodes import(
     validate_input,
     verify_current_affiliation,
 )
-
 from research_finder.routes import (
     route_after_university_discovery,
     route_after_validation,
@@ -30,15 +29,15 @@ from research_finder.state import (
 def build_research_graph():
     """Build and compile the research-supervisor workflow."""
 
-    builder=StateGraph(
-         ResearchGraphState,
+    builder = StateGraph(
+        ResearchGraphState,
         input_schema=ResearchGraphInput,
         output_schema=ResearchGraphOutput,
     )
 
-    builder.add_node("initialize_workflow",initialize_workflow)
-    builder.add_node("validate_input",validate_input)
-    builder.add_node("expand_research_topics",expand_research_topic)
+    builder.add_node("initialize_workflow", initialize_workflow)
+    builder.add_node("validate_input", validate_input)
+    builder.add_node("expand_research_topic", expand_research_topic)
     builder.add_node("find_universities", find_universities)
     builder.add_node("search_researchers", search_researchers)
     builder.add_node("search_labs", search_labs)
@@ -51,9 +50,8 @@ def build_research_graph():
     builder.add_node("score_relevance", score_relevance)
     builder.add_node("remove_duplicates", remove_duplicates)
     builder.add_node("rank_results", rank_results)
-    builder.add_node("generate_final_output", generate_final_output)   
+    builder.add_node("generate_final_output", generate_final_output)
 
-    
     builder.add_edge(START, "initialize_workflow")
     builder.add_edge("initialize_workflow", "validate_input")
 
@@ -88,7 +86,7 @@ def build_research_graph():
     builder.add_edge("rank_results", "generate_final_output")
     builder.add_edge("generate_final_output", END)
 
-
     return builder.compile()
 
-graph=build_research_graph()
+
+graph = build_research_graph()
