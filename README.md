@@ -13,7 +13,23 @@ returns an empty result with clear warnings. LLM integration and external search
 have not yet been implemented.
 
 ## MVP scope
+## Free web search
 
+The project uses DDGS for free text-based web search.
+
+The search layer provides:
+
+- Configurable region and safe-search settings
+- Request timeouts
+- Bounded retries
+- Result limits
+- URL validation
+- Duplicate removal
+- Normalised titles and snippets
+- A reusable client interface
+
+Search is not connected to the LangGraph workflow yet. Official
+university-domain query generation will be implemented next.
 ### Inputs
 
 * Country: Australia
@@ -103,29 +119,17 @@ The current graph safely stops when input is invalid or when no universities
 are found. It returns warnings instead of generating unsupported researcher
 information.
 
-## Development status
-
-- [x] Project foundation
-- [x] Input and output models
-- [x] LangGraph state
-- [x] Input-validation node
-- [x] Initial LangGraph workflow skeleton
-- [x] Conditional validation routing
-- [x] Safe empty-result behaviour
-- [x] Configurable cloud LLM settings
-- [x] Groq API provider
-- [x] Ollama Cloud API provider
-- [x] Manual API connection check
-- [x] Structured topic-expansion models
-- [x] Structured topic-expansion service
-- [x] Real topic-expansion LangGraph node
-- [x] Deterministic topic-expansion fallback
-- [x] Topic-expansion unit tests
-- [ ] Australian university and state directory
-- [ ] Search integration
-- [ ] Evidence extraction
-- [ ] Current-affiliation verification
-- [ ] Deterministic relevance scoring
-- [ ] Streamlit interface
-- [ ] SQLite persistence
-- [ ] Docker deployment
+- [x] Free web-search dependency
+- [x] Search configuration
+- [x] Search request model
+- [x] Search result model
+- [x] DDGS search client
+- [x] Search timeout
+- [x] Bounded retry behaviour
+- [x] Search result limits
+- [x] URL validation
+- [x] Duplicate-result removal
+- [x] Web-search unit tests
+- [x] Manual web-search check
+- [ ] Official university-domain query generation
+- [ ] Researcher and lab page search
