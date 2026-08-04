@@ -93,6 +93,10 @@ def test_graph_returns_valid_empty_response(
             "University directory selected "
             "12 candidates for Victoria, Australia."
         ),
+        (
+            "Generated 48 official "
+            "university-domain queries."
+        ),
         "Researcher-search placeholder completed.",
         "Research-lab search placeholder completed.",
         "Research-project search placeholder completed.",
