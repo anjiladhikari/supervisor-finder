@@ -18,11 +18,14 @@ class LLMProvider(StrEnum):
     GROQ = "groq"
     OLLAMA = "ollama"
 
+
 class SearchSafeSearch(StrEnum):
     """safe search levels accepted by the search provider."""
-    ON="on"
-    MODERATE="moderate"
-    OFF="off"
+
+    ON = "on"
+    MODERATE = "moderate"
+    OFF = "off"
+
 
 class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
@@ -74,6 +77,38 @@ class Settings(BaseSettings):
         le=4096,
     )
 
+    search_region: str = Field(
+        default="au-en",
+        min_length=2,
+        max_length=20,
+    )
+    search_safesearch: SearchSafeSearch = SearchSafeSearch.MODERATE
+    search_timeout_seconds: int = Field(
+        default=15,
+        ge=5,
+        le=60,
+    )
+    search_max_retries: int = Field(
+        default=2,
+        ge=0,
+        le=5,
+    )
+    search_max_results: int = Field(
+        default=10,
+        ge=1,
+        le=20,
+    )
+
+    @field_validator("search_region")
+    @classmethod
+    def normalise_search_region(
+        cls,
+        value: str,
+    ) -> str:
+        """Normalise the search-region value."""
+
+        return value.strip().lower()
+
     @field_validator(
         "groq_api_key",
         "ollama_api_key",
@@ -102,22 +137,11 @@ class Settings(BaseSettings):
     def validate_provider_credentials(self) -> Settings:
         """Require credentials for the selected provider."""
 
-        if (
-            self.llm_provider == LLMProvider.GROQ
-            and self.groq_api_key is None
-        ):
-            raise ValueError(
-                "GROQ_API_KEY is required when LLM_PROVIDER=groq."
-            )
+        if self.llm_provider == LLMProvider.GROQ and self.groq_api_key is None:
+            raise ValueError("GROQ_API_KEY is required when LLM_PROVIDER=groq.")
 
-        if (
-            self.llm_provider == LLMProvider.OLLAMA
-            and self.ollama_api_key is None
-        ):
-            raise ValueError(
-                "OLLAMA_API_KEY is required when "
-                "LLM_PROVIDER=ollama."
-            )
+        if self.llm_provider == LLMProvider.OLLAMA and self.ollama_api_key is None:
+            raise ValueError("OLLAMA_API_KEY is required when LLM_PROVIDER=ollama.")
 
         return self
 
