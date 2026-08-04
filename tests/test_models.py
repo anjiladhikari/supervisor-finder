@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from research_finder.models import (
-    AustralianState,
+  
     EvidenceSource,
     ProjectStatus,
     Publication,

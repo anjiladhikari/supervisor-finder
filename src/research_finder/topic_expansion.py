@@ -37,9 +37,9 @@ def build_topic_expansion_messages(
     """Build provider-independent topic-expansion messages."""
 
     if request.state is None:
-        state_scope = "All Australian states and territories"
+        state_scope = f"All states and territories in {request.country}"
     else:
-        state_scope = request.state.value
+        state_scope = request.state
 
     user_prompt = f"""
 Country scope: {request.country}

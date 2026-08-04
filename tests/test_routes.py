@@ -9,6 +9,9 @@ def test_valid_request_routes_to_topic_expansion() -> None:
     state = {
         "request": SearchRequest(
             country="Australia",
+            country_code="AU",
+            state=None,
+            state_code=None,
             research_topic="Reinforcement learning",
         ),
         "errors": [],
@@ -22,7 +25,7 @@ def test_valid_request_routes_to_topic_expansion() -> None:
 def test_invalid_request_routes_to_final_output() -> None:
     state = {
         "request": None,
-        "errors": ["country: Input should be Australia."],
+        "errors": ["country: Unsupported country."],
     }
 
     destination = route_after_validation(state)
@@ -38,7 +41,9 @@ def test_found_universities_route_to_researcher_search() -> None:
         "errors": [],
     }
 
-    destination = route_after_university_discovery(state)
+    destination = route_after_university_discovery(
+        state
+    )
 
     assert destination == "search_researchers"
 
@@ -49,6 +54,8 @@ def test_no_universities_route_to_final_output() -> None:
         "errors": [],
     }
 
-    destination = route_after_university_discovery(state)
+    destination = route_after_university_discovery(
+        state
+    )
 
     assert destination == "generate_final_output"
