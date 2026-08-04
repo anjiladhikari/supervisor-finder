@@ -8,7 +8,15 @@ from research_finder.topic_expansion import (
     generate_topic_expansion,
 )
 
-
+from research_finder.location import (
+    LocationLookupError,
+    resolve_location,
+)
+from research_finder.university_directory import (
+    UniversityDirectoryError,
+    get_universities,
+    supports_country,
+)
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     """Create predictable initial values for the workflow."""
 
@@ -34,40 +42,97 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     }
 
 
-def validate_input(state: ResearchGraphState) -> dict[str, object]:
-    """Validate the raw user request using the SearchRequest model."""
+def validate_input(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Resolve location values and validate the request."""
 
     raw_request = state.get("raw_request")
 
     if raw_request is None:
         return {
             "request": None,
-            "errors": ["raw_request: Graph input is missing."],
-            "execution_log": ["Input validation failed."],
+            "errors": [
+                "raw_request: Graph input is missing."
+            ],
+            "execution_log": [
+                "Input validation failed."
+            ],
         }
 
     try:
-        request = SearchRequest.model_validate(raw_request)
+        location = resolve_location(
+            country=raw_request.get("country"),
+            state=raw_request.get("state"),
+        )
+    except LocationLookupError as error:
+        return {
+            "request": None,
+            "errors": [
+                f"{error.field}: {error.message}"
+            ],
+            "execution_log": [
+                "Input validation failed."
+            ],
+        }
+
+    if not supports_country(location.country_code):
+        return {
+            "request": None,
+            "errors": [
+                (
+                    f"country: {location.country} "
+                    "is not supported yet."
+                )
+            ],
+            "execution_log": [
+                "Input validation failed."
+            ],
+        }
+
+    request_data = dict(raw_request)
+    request_data.update(
+        {
+            "country": location.country,
+            "country_code": location.country_code,
+            "state": location.state,
+            "state_code": location.state_code,
+        }
+    )
+
+    try:
+        request = SearchRequest.model_validate(
+            request_data
+        )
     except ValidationError as error:
         formatted_errors = []
 
-        for validation_error in error.errors(include_url=False):
-            location = ".".join(
-                str(part) for part in validation_error["loc"]
+        for item in error.errors(
+            include_url=False
+        ):
+            field = ".".join(
+                str(part)
+                for part in item["loc"]
             )
-            message = validation_error["msg"]
-            formatted_errors.append(f"{location}: {message}")
+            formatted_errors.append(
+                f"{field}: {item['msg']}"
+            )
 
         return {
             "request": None,
             "errors": formatted_errors,
-            "execution_log": ["Input validation failed."],
+            "execution_log": [
+                "Input validation failed."
+            ],
         }
 
     return {
         "request": request,
-        "execution_log": ["Input validation completed."],
+        "execution_log": [
+            "Input validation completed."
+        ],
     }
+
 
 def expand_research_topic(
     state: ResearchGraphState,
@@ -123,19 +188,57 @@ def expand_research_topic(
         ],
     }
 
-
 def find_universities(
-    _: ResearchGraphState,
+    state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Placeholder for official Australian university discovery."""
+    """Select universities for the optional state."""
+
+    request = state.get("request")
+
+    if request is None:
+        return {
+            "candidate_universities": [],
+            "errors": [
+                (
+                    "University selection cannot run "
+                    "without a validated request."
+                )
+            ],
+            "execution_log": [
+                "University-directory selection failed."
+            ],
+        }
+
+    try:
+        candidates = list(
+            get_universities(
+                country_code=request.country_code,
+                state_code=request.state_code,
+            )
+        )
+    except UniversityDirectoryError as error:
+        return {
+            "candidate_universities": [],
+            "errors": [str(error)],
+            "execution_log": [
+                "University-directory selection failed."
+            ],
+        }
+
+    scope = request.country
+
+    if request.state is not None:
+        scope = f"{request.state}, {request.country}"
 
     return {
-        "candidate_universities": [],
-        "warnings": [
-            ("University discovery is not implemented yet; "
-            "no external search was performed.")
+        "candidate_universities": candidates,
+        "execution_log": [
+            (
+                "University directory selected "
+                f"{len(candidates)} candidates "
+                f"for {scope}."
+            )
         ],
-        "execution_log": ["University-discovery placeholder completed."],
     }
 
 
