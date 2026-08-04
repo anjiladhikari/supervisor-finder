@@ -17,35 +17,57 @@ from research_finder.models import (
     VerificationStatus,
 )
 
-
-def test_search_request_normalize_input()-> None:
+def test_search_request_normalises_input() -> None:
     request = SearchRequest(
-        country=" australia ",
-        state="vic",
-      research_topic="  reinforcement   learning for time-series data  ",
+        country=" Australia ",
+        country_code="au",
+        state=" Victoria ",
+        state_code="au-vic",
+        research_topic=(
+            "  reinforcement   learning "
+            "for time-series data  "
+        ),
     )
-    assert request.country=="Australia"
-    assert request.state==AustralianState.VICTORIA
-    assert(
-        request.research_topic== "reinforcement learning for time-series data"
 
+    assert request.country == "Australia"
+    assert request.country_code == "AU"
+    assert request.state == "Victoria"
+    assert request.state_code == "AU-VIC"
+    assert request.research_topic == (
+        "reinforcement learning for time-series data"
     )
-    assert request.max_results==5
+    assert request.max_results == 5
 
-def test_search_request_rejects_unsupported_country() -> None:
-    with pytest.raises(ValidationError):
+
+def test_search_request_rejects_wrong_state_country() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="state_code must belong",
+    ):
         SearchRequest(
-            country="United States",
+            country="Australia",
+            country_code="AU",
+            state="California",
+            state_code="US-CA",
             research_topic="Reinforcement learning",
         )
+
 
 def test_search_request_rejects_unexpected_fields() -> None:
     with pytest.raises(ValidationError):
         SearchRequest(
             country="Australia",
+            country_code="AU",
+            state=None,
+            state_code=None,
             research_topic="Reinforcement learning",
             unexpected_field="This must not be accepted",
         )
+
+
+
+
+
 
 def test_relevance_score_calculates_total() -> None:
     score = RelevanceScore(
@@ -125,13 +147,16 @@ def test_valid_researcher_result() -> None:
     )
 
     response = SearchResponse(
-        request=SearchRequest(
-            country="Australia",
-            state="Victoria",
-            research_topic=(
-                "Reinforcement learning for early time-series classification"
-            ),
-        ),
+    request=SearchRequest(
+    country="Australia",
+    country_code="AU",
+    state="Victoria",
+    state_code="AU-VIC",
+    research_topic=(
+        "Reinforcement learning for "
+        "early time-series classification"
+    ),
+),
         results=[result],
     )
 
