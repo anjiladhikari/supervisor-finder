@@ -15,7 +15,8 @@ dependencies = [
     "langchain-ollama",
     "pydantic[email]",
     "pydantic-settings",
-    "pycountry"
+    "pycountry",
+    "ddgs",
 ]
 
 [project.optional-dependencies]

@@ -4,7 +4,6 @@ import pytest
 from pydantic import ValidationError
 
 from research_finder.models import (
-  
     EvidenceSource,
     ProjectStatus,
     Publication,
@@ -16,6 +15,7 @@ from research_finder.models import (
     SourceType,
     VerificationStatus,
 )
+
 
 def test_search_request_normalises_input() -> None:
     request = SearchRequest(

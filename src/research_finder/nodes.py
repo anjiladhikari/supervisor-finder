@@ -11,13 +11,13 @@ from research_finder.topic_expansion import (
     create_fallback_topic_expansion,
     generate_topic_expansion,
 )
-
-
 from research_finder.university_directory import (
     UniversityDirectoryError,
     get_universities,
     supports_country,
 )
+
+
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     """Create predictable initial values for the workflow."""
 

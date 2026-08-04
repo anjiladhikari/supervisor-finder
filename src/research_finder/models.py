@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from enum import StrEnum
-
 from urllib.parse import urlparse
 
 # StrEnum    → defines fixed string options
