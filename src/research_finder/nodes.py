@@ -14,7 +14,7 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
 
     return {
         "request": None,
-        "topic_expansion":None,
+        "topic_expansion": None,
         "expanded_topics": [],
         "candidate_universities": [],
         "researcher_pages": [],
@@ -90,7 +90,7 @@ def expand_research_topic(
             request=request,
             model=model,
         )
-    except Exception as error:
+    except Exception as error: # noqa: BLE001
         fallback_expansion = (
             create_fallback_topic_expansion(request)
         )
