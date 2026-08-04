@@ -1,38 +1,39 @@
-from typing import TypedDict
+from pprint import pprint
 
-from langgraph.graph import END, START, StateGraph
-
-
-class HealthState(TypedDict):
-    """State used only to confirm that LangGraph is working."""
-
-    message: str
+from research_finder.graph import graph
 
 
-def health_check(state: HealthState) -> HealthState:
-    """Return an updated health-check message."""
+def main() -> None:
+    """Run the workflow with a temporary local example."""
 
-    return {
-        "message": f"{state['message']} | LangGraph is ready",
-    }
+    output = graph.invoke(
+        {
+            "raw_request": {
+                "country": "Australia",
+                "state": "Victoria",
+                "research_topic": (
+                    "Reinforcement learning for "
+                    "early time-series classification"
+                ),
+                "max_results": 5,
+            }
+        }
+    )
 
+    final_response = output["final_response"]
 
-def build_health_graph():
-    """Build and compile the temporary health-check graph."""
+    if final_response is None:
+        print("The workflow could not produce a valid response.")
+        pprint(output)
+        return
 
-    builder = StateGraph(HealthState)
+    pprint(final_response.model_dump(mode="json"))
 
-    builder.add_node("health_check", health_check)
+    print("\nExecution log:")
 
-    builder.add_edge(START, "health_check")
-    builder.add_edge("health_check", END)
-
-    return builder.compile()
-
-
-graph = build_health_graph()
+    for message in output["execution_log"]:
+        print(f"- {message}")
 
 
 if __name__ == "__main__":
-    result = graph.invoke({"message": "Project foundation"})
-    print(result)
+    main()
