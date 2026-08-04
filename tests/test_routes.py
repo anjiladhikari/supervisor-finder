@@ -1,5 +1,6 @@
 from research_finder.models import SearchRequest
 from research_finder.routes import (
+    route_after_search_query_generation,
     route_after_university_discovery,
     route_after_validation,
 )
@@ -35,17 +36,13 @@ def test_invalid_request_routes_to_final_output() -> None:
 
 def test_found_universities_route_to_researcher_search() -> None:
     state = {
-        "candidate_universities": [
-            "Example university candidate"
-        ],
+        "candidate_universities": ["Example university candidate"],
         "errors": [],
     }
 
-    destination = route_after_university_discovery(
-        state
-    )
+    destination = route_after_university_discovery(state)
 
-    assert destination == "search_researchers"
+    assert destination == "generate_search_queries"
 
 
 def test_no_universities_route_to_final_output() -> None:
@@ -54,8 +51,40 @@ def test_no_universities_route_to_final_output() -> None:
         "errors": [],
     }
 
-    destination = route_after_university_discovery(
-        state
+    destination = route_after_university_discovery(state)
+
+    assert destination == "generate_final_output"
+
+
+
+def test_generated_queries_route_to_researcher_search(
+) -> None:
+    state = {
+        "search_queries": [
+            "Example query"
+        ],
+        "errors": [],
+    }
+
+    destination = (
+        route_after_search_query_generation(
+            state
+        )
+    )
+
+    assert destination == "search_researchers"
+
+
+def test_missing_queries_route_to_final_output() -> None:
+    state = {
+        "search_queries": [],
+        "errors": [],
+    }
+
+    destination = (
+        route_after_search_query_generation(
+            state
+        )
     )
 
     assert destination == "generate_final_output"
