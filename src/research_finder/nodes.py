@@ -81,11 +81,16 @@ def expand_research_topic(
 
     return {
         "expanded_topics": [request.research_topic],
-        "warnings": [
-            "LLM topic expansion is not implemented yet; "
-            "the original research topic was used."
-        ],
-        "execution_log": ["Topic-expansion placeholder completed."],
+      "warnings": [
+    (
+        "University discovery is not implemented yet; "
+        "no external search was performed."
+    )
+],
+        "execution_log": [
+    (
+        "Final response could not be generated because "
+        "the request was invalid."  )],
     }
 
 
@@ -97,8 +102,8 @@ def find_universities(
     return {
         "candidate_universities": [],
         "warnings": [
-            "University discovery is not implemented yet; "
-            "no external search was performed."
+            ("University discovery is not implemented yet; "
+            "no external search was performed.")
         ],
         "execution_log": ["University-discovery placeholder completed."],
     }
@@ -248,8 +253,8 @@ def generate_final_output(
         return {
             "final_response": None,
             "execution_log": [
-                "Final response could not be generated because "
-                "the request was invalid."
+                ("Final response could not be generated because "
+                "the request was invalid.")
             ],
         }
 
