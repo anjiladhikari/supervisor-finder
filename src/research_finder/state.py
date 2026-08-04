@@ -7,7 +7,9 @@ from research_finder.models import (
     SearchResponse,
     TopicExpansion,
 )
-
+from research_finder.university_directory import (
+    UniversityRecord,
+)
 
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
@@ -37,8 +39,8 @@ class ResearchGraphState(WorkflowMessages, total=False):
 
     topic_expansion: TopicExpansion | None
     expanded_topics: list[str]
-    
-    candidate_universities: list[str]
+
+    candidate_universities: list[UniversityRecord]
 
     researcher_pages: list[str]
     lab_pages: list[str]
