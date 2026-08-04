@@ -2,10 +2,7 @@ import pytest
 
 from research_finder import nodes as nodes_module
 from research_finder.graph import graph
-from research_finder.models import (
-    AustralianState,
-    TopicExpansionDraft,
-)
+from research_finder.models import TopicExpansionDraft
 
 
 class FakeGraphStructuredModel:
@@ -64,7 +61,8 @@ def test_graph_returns_valid_empty_response(
                 "country": " australia ",
                 "state": "vic",
                 "research_topic": (
-                    "Reinforcement learning for time-series data"
+                    "Reinforcement learning "
+                    "for time-series data"
                 ),
             }
         }
@@ -74,15 +72,15 @@ def test_graph_returns_valid_empty_response(
 
     assert output["errors"] == []
     assert response is not None
+
     assert response.request.country == "Australia"
-    assert (
-        response.request.state
-        == AustralianState.VICTORIA
-    )
+    assert response.request.country_code == "AU"
+    assert response.request.state == "Victoria"
+    assert response.request.state_code == "AU-VIC"
     assert response.result_count == 0
 
     assert any(
-        "University discovery is not implemented"
+        "Researcher search is not implemented"
         in warning
         for warning in response.warnings
     )
@@ -91,7 +89,21 @@ def test_graph_returns_valid_empty_response(
         "Workflow initialized.",
         "Input validation completed.",
         "Structured topic expansion completed.",
-        "University-discovery placeholder completed.",
+        (
+            "University directory selected "
+            "12 candidates for Victoria, Australia."
+        ),
+        "Researcher-search placeholder completed.",
+        "Research-lab search placeholder completed.",
+        "Research-project search placeholder completed.",
+        "Publication-search placeholder completed.",
+        (
+            "Affiliation-verification placeholder "
+            "completed."
+        ),
+        "Relevance-scoring placeholder completed.",
+        "Duplicate removal completed.",
+        "Result ranking completed.",
         "Final response generated.",
     ]
 

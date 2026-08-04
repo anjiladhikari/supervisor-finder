@@ -9,14 +9,14 @@ def main() -> None:
     """Run one real structured topic-expansion request."""
 
     request = SearchRequest(
-        country="Australia",
-        country_code="AU",
-        state="Victoria",
-        state_code="AU-VIC",
-        research_topic=(
-            "Reinforcement learning for time-series data"
-        ),
-    )
+    country="Australia",
+    country_code="AU",
+    state="Victoria",
+    state_code="AU-VIC",
+    research_topic=(
+        "Reinforcement learning for time-series data"
+    ),
+)
 
     model = create_chat_model()
     expansion = generate_topic_expansion(
