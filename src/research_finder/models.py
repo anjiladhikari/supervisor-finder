@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Literal
+from urllib.parse import urlparse
 
 # StrEnum    → defines fixed string options
 # Literal    → allows only one or several exact values
@@ -300,7 +301,140 @@ class TopicExpansion(TopicExpansionDraft):
 
         return unique_terms
 
+class AustralianUniversity(StrictModel):
+    """One verified university in the Australian directory."""
 
+    name: str = Field(
+        min_length=2,
+        max_length=200,
+    )
+    aliases: list[str] = Field(
+        default_factory=list,
+        max_length=10,
+    )
+    official_domain: str = Field(
+        min_length=4,
+        max_length=255,
+    )
+    official_website: HttpUrl
+    states: list[AustralianState] = Field(
+        min_length=1,
+        max_length=8,
+    )
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def normalise_university_name(
+        cls,
+        value: object,
+    ) -> object:
+        """Normalise repeated whitespace in a university name."""
+
+        if isinstance(value, str):
+            return " ".join(value.split())
+
+        return value
+
+    @field_validator("aliases", mode="before")
+    @classmethod
+    def normalise_university_aliases(
+        cls,
+        value: object,
+    ) -> object:
+        """Clean and deduplicate university aliases."""
+
+        if not isinstance(value, list):
+            return value
+
+        cleaned_aliases: list[str] = []
+        seen_aliases: set[str] = set()
+
+        for alias in value:
+            if not isinstance(alias, str):
+                continue
+
+            cleaned_alias = " ".join(alias.split())
+
+            if not cleaned_alias:
+                continue
+
+            comparison_key = cleaned_alias.casefold()
+
+            if comparison_key in seen_aliases:
+                continue
+
+            seen_aliases.add(comparison_key)
+            cleaned_aliases.append(cleaned_alias)
+
+        return cleaned_aliases
+
+    @field_validator("official_domain", mode="before")
+    @classmethod
+    def normalise_official_domain(
+        cls,
+        value: object,
+    ) -> object:
+        """Validate and normalise a root university domain."""
+
+        if not isinstance(value, str):
+            return value
+
+        cleaned_domain = value.strip().casefold()
+
+        if "://" in cleaned_domain or "/" in cleaned_domain:
+            raise ValueError(
+                "official_domain must be a domain without "
+                "a scheme or path."
+            )
+
+        return cleaned_domain.removeprefix("www.")
+
+    @field_validator("states")
+    @classmethod
+    def remove_duplicate_states(
+        cls,
+        values: list[AustralianState],
+    ) -> list[AustralianState]:
+        """Keep each university state only once."""
+
+        return list(dict.fromkeys(values))
+
+    @model_validator(mode="after")
+    def validate_official_website_domain(
+        self,
+    ) -> AustralianUniversity:
+        """Ensure the website belongs to the official domain."""
+
+        website_host = urlparse(
+            str(self.official_website)
+        ).hostname
+
+        if website_host is None:
+            raise ValueError(
+                "official_website must contain a valid hostname."
+            )
+
+        normalised_host = (
+            website_host.casefold()
+            .removeprefix("www.")
+        )
+
+        is_root_domain = (
+            normalised_host == self.official_domain
+        )
+        is_subdomain = normalised_host.endswith(
+            f".{self.official_domain}"
+        )
+
+        if not is_root_domain and not is_subdomain:
+            raise ValueError(
+                "official_website must use official_domain "
+                "or one of its subdomains."
+            )
+
+        return self
+
+        
 class EvidenceSource(StrictModel):
     """A source that supports one or more claims about a researcher."""
 
