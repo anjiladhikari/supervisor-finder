@@ -6,7 +6,6 @@ from research_finder.config import (
     Settings,
 )
 
-
 LLM_ENVIRONMENT_VARIABLES = [
     "LLM_PROVIDER",
     "GROQ_MODEL",
