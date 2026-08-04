@@ -16,6 +16,9 @@ from research_finder.university_directory import (
     get_universities,
     supports_country,
 )
+from research_finder.search_queries import (
+    generate_official_search_queries,
+)
 
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
@@ -26,6 +29,7 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
         "topic_expansion": None,
         "expanded_topics": [],
         "candidate_universities": [],
+        "search_queries": [],
         "researcher_pages": [],
         "lab_pages": [],
         "project_pages": [],
@@ -53,12 +57,8 @@ def validate_input(
     if raw_request is None:
         return {
             "request": None,
-            "errors": [
-                "raw_request: Graph input is missing."
-            ],
-            "execution_log": [
-                "Input validation failed."
-            ],
+            "errors": ["raw_request: Graph input is missing."],
+            "execution_log": ["Input validation failed."],
         }
 
     try:
@@ -69,26 +69,15 @@ def validate_input(
     except LocationLookupError as error:
         return {
             "request": None,
-            "errors": [
-                f"{error.field}: {error.message}"
-            ],
-            "execution_log": [
-                "Input validation failed."
-            ],
+            "errors": [f"{error.field}: {error.message}"],
+            "execution_log": ["Input validation failed."],
         }
 
     if not supports_country(location.country_code):
         return {
             "request": None,
-            "errors": [
-                (
-                    f"country: {location.country} "
-                    "is not supported yet."
-                )
-            ],
-            "execution_log": [
-                "Input validation failed."
-            ],
+            "errors": [(f"country: {location.country} is not supported yet.")],
+            "execution_log": ["Input validation failed."],
         }
 
     request_data = dict(raw_request)
@@ -102,36 +91,23 @@ def validate_input(
     )
 
     try:
-        request = SearchRequest.model_validate(
-            request_data
-        )
+        request = SearchRequest.model_validate(request_data)
     except ValidationError as error:
         formatted_errors = []
 
-        for item in error.errors(
-            include_url=False
-        ):
-            field = ".".join(
-                str(part)
-                for part in item["loc"]
-            )
-            formatted_errors.append(
-                f"{field}: {item['msg']}"
-            )
+        for item in error.errors(include_url=False):
+            field = ".".join(str(part) for part in item["loc"])
+            formatted_errors.append(f"{field}: {item['msg']}")
 
         return {
             "request": None,
             "errors": formatted_errors,
-            "execution_log": [
-                "Input validation failed."
-            ],
+            "execution_log": ["Input validation failed."],
         }
 
     return {
         "request": request,
-        "execution_log": [
-            "Input validation completed."
-        ],
+        "execution_log": ["Input validation completed."],
     }
 
 
@@ -144,9 +120,7 @@ def expand_research_topic(
 
     if request is None:
         return {
-            "errors": [
-                "Topic expansion cannot run without a validated request."
-            ],
+            "errors": ["Topic expansion cannot run without a validated request."],
             "execution_log": ["Topic expansion failed."],
         }
 
@@ -156,16 +130,12 @@ def expand_research_topic(
             request=request,
             model=model,
         )
-    except Exception as error: # noqa: BLE001
-        fallback_expansion = (
-            create_fallback_topic_expansion(request)
-        )
+    except Exception as error:  # noqa: BLE001
+        fallback_expansion = create_fallback_topic_expansion(request)
 
         return {
             "topic_expansion": fallback_expansion,
-            "expanded_topics": (
-                fallback_expansion.to_search_terms()
-            ),
+            "expanded_topics": (fallback_expansion.to_search_terms()),
             "warnings": [
                 (
                     "Structured LLM topic expansion was unavailable "
@@ -173,21 +143,15 @@ def expand_research_topic(
                     "research topic was used."
                 )
             ],
-            "execution_log": [
-                (
-                    "Topic expansion completed with "
-                    "deterministic fallback."
-                )
-            ],
+            "execution_log": [("Topic expansion completed with deterministic fallback.")],
         }
 
     return {
         "topic_expansion": expansion,
         "expanded_topics": expansion.to_search_terms(),
-        "execution_log": [
-            "Structured topic expansion completed."
-        ],
+        "execution_log": ["Structured topic expansion completed."],
     }
+
 
 def find_universities(
     state: ResearchGraphState,
@@ -199,15 +163,8 @@ def find_universities(
     if request is None:
         return {
             "candidate_universities": [],
-            "errors": [
-                (
-                    "University selection cannot run "
-                    "without a validated request."
-                )
-            ],
-            "execution_log": [
-                "University-directory selection failed."
-            ],
+            "errors": [("University selection cannot run without a validated request.")],
+            "execution_log": ["University-directory selection failed."],
         }
 
     try:
@@ -221,9 +178,7 @@ def find_universities(
         return {
             "candidate_universities": [],
             "errors": [str(error)],
-            "execution_log": [
-                "University-directory selection failed."
-            ],
+            "execution_log": ["University-directory selection failed."],
         }
 
     scope = request.country
@@ -234,14 +189,67 @@ def find_universities(
     return {
         "candidate_universities": candidates,
         "execution_log": [
-            (
-                "University directory selected "
-                f"{len(candidates)} candidates "
-                f"for {scope}."
-            )
+            (f"University directory selected {len(candidates)} candidates for {scope}.")
         ],
     }
 
+    
+def generate_search_queries(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Generate official university-domain queries."""
+
+    universities = state.get(
+        "candidate_universities",
+        [],
+    )
+    topics = state.get(
+        "expanded_topics",
+        [],
+    )
+
+    if not universities:
+        return {
+            "search_queries": [],
+            "errors": [
+                (
+                    "Search queries cannot be generated "
+                    "without candidate universities."
+                )
+            ],
+            "execution_log": [
+                "Search-query generation failed."
+            ],
+        }
+
+    if not topics:
+        return {
+            "search_queries": [],
+            "errors": [
+                (
+                    "Search queries cannot be generated "
+                    "without expanded topics."
+                )
+            ],
+            "execution_log": [
+                "Search-query generation failed."
+            ],
+        }
+
+    queries = generate_official_search_queries(
+        universities=universities,
+        topics=topics,
+    )
+
+    return {
+        "search_queries": queries,
+        "execution_log": [
+            (
+                f"Generated {len(queries)} official "
+                "university-domain queries."
+            )
+        ],
+    }
 
 def search_researchers(
     _: ResearchGraphState,
@@ -251,9 +259,7 @@ def search_researchers(
     return {
         "researcher_pages": [],
         "extracted_candidates": [],
-        "warnings": [
-            "Researcher search is not implemented yet."
-        ],
+        "warnings": ["Researcher search is not implemented yet."],
         "execution_log": ["Researcher-search placeholder completed."],
     }
 
@@ -263,9 +269,7 @@ def search_labs(_: ResearchGraphState) -> dict[str, object]:
 
     return {
         "lab_pages": [],
-        "warnings": [
-            "Research lab search is not implemented yet."
-        ],
+        "warnings": ["Research lab search is not implemented yet."],
         "execution_log": ["Research-lab search placeholder completed."],
     }
 
@@ -275,9 +279,7 @@ def search_projects(_: ResearchGraphState) -> dict[str, object]:
 
     return {
         "project_pages": [],
-        "warnings": [
-            "Research project search is not implemented yet."
-        ],
+        "warnings": ["Research project search is not implemented yet."],
         "execution_log": ["Research-project search placeholder completed."],
     }
 
@@ -289,9 +291,7 @@ def search_publications(
 
     return {
         "publication_pages": [],
-        "warnings": [
-            "Publication search is not implemented yet."
-        ],
+        "warnings": ["Publication search is not implemented yet."],
         "execution_log": ["Publication-search placeholder completed."],
     }
 
@@ -303,12 +303,8 @@ def verify_current_affiliation(
 
     return {
         "verified_results": [],
-        "warnings": [
-            "Current affiliation verification is not implemented yet."
-        ],
-        "execution_log": [
-            "Affiliation-verification placeholder completed."
-        ],
+        "warnings": ["Current affiliation verification is not implemented yet."],
+        "execution_log": ["Affiliation-verification placeholder completed."],
     }
 
 
@@ -321,9 +317,7 @@ def score_relevance(
 
     return {
         "scored_results": verified_results,
-        "warnings": [
-            "Deterministic relevance scoring is not implemented yet."
-        ],
+        "warnings": ["Deterministic relevance scoring is not implemented yet."],
         "execution_log": ["Relevance-scoring placeholder completed."],
     }
 
@@ -346,8 +340,7 @@ def remove_duplicates(
 
         if (
             existing_result is None
-            or result.relevance_score.total
-            > existing_result.relevance_score.total
+            or result.relevance_score.total > existing_result.relevance_score.total
         ):
             unique_results[key] = result
 
@@ -387,8 +380,7 @@ def generate_final_output(
         return {
             "final_response": None,
             "execution_log": [
-                ("Final response could not be generated because "
-                "the request was invalid.")
+                ("Final response could not be generated because the request was invalid.")
             ],
         }
 
@@ -396,9 +388,7 @@ def generate_final_output(
     workflow_warnings = list(state.get("warnings", []))
     workflow_errors = state.get("errors", [])
 
-    workflow_warnings.extend(
-        f"Workflow error: {error}" for error in workflow_errors
-    )
+    workflow_warnings.extend(f"Workflow error: {error}" for error in workflow_errors)
 
     response = SearchResponse(
         request=request,
