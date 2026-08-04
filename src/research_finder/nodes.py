@@ -3,10 +3,11 @@ from pydantic import ValidationError
 from research_finder.models import SearchRequest, SearchResponse
 from research_finder.state import ResearchGraphState
 
-def initialize_workflow(_:ResearchGraphState) -> dict[str,object]:
-    """Create predicatble initial for the workflow."""
 
-    return{
+def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
+    """Create predictable initial values for the workflow."""
+
+    return {
         "request": None,
         "expanded_topics": [],
         "candidate_universities": [],
@@ -27,70 +28,73 @@ def initialize_workflow(_:ResearchGraphState) -> dict[str,object]:
     }
 
 
+def validate_input(state: ResearchGraphState) -> dict[str, object]:
+    """Validate the raw user request using the SearchRequest model."""
 
-def validate_input(state:ResearchGraphState)-> dict[str,object]:
-    """Validate the raw user request using the searchrequest model."""
-
-    raw_request=state.get("raw_request") 
+    raw_request = state.get("raw_request")
 
     if raw_request is None:
-        return{
+        return {
             "request": None,
-            "errors":["raw_request: grpah input is missing"],
-            "execution_log":["Input validation failed"],
+            "errors": ["raw_request: Graph input is missing."],
+            "execution_log": ["Input validation failed."],
         }
 
     try:
-        request=SearchRequest.model_validate(raw_request)
+        request = SearchRequest.model_validate(raw_request)
     except ValidationError as error:
-        formatted_errors=[]
+        formatted_errors = []
 
         for validation_error in error.errors(include_url=False):
-            location=".".join(
-                str(part) for part in vlidation_error("loc")
-
+            location = ".".join(
+                str(part) for part in validation_error["loc"]
             )
-            message=validation_error["msg"]
-            formatted_errors.append(f"{location}:{message}")
+            message = validation_error["msg"]
+            formatted_errors.append(f"{location}: {message}")
 
-        return{
-            "request":None,
+        return {
+            "request": None,
             "errors": formatted_errors,
-            "execution_log":["Input validation failed"],
+            "execution_log": ["Input validation failed."],
         }
 
-    return{
-        "request":request,
-    
-        "execution_log": ["Input validated successfully"],
+    return {
+        "request": request,
+        "execution_log": ["Input validation completed."],
     }
 
 
+def expand_research_topic(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Temporarily use only the original topic until LLM expansion is added."""
 
-def expand_search_topic(state:ResearchGraphState,) -> dict[str,object]:
-    """temporaily use only the original topic until LLM is added."""
-    request =state.get("request")
+    request = state.get("request")
 
     if request is None:
-        return{
-            "errors":[
-                "Topic expansion can not run without a validated request."
+        return {
+            "errors": [
+                "Topic expansion cannot run without a validated request."
             ],
-            "execution_log":["Topic expansion failed"],
+            "execution_log": ["Topic expansion failed."],
         }
-    return{
-        "expanded_topics":[request.research_topic],
-        "warnings":[
-            "LLM topic expansion not yet implemented; only original topic used."
+
+    return {
+        "expanded_topics": [request.research_topic],
+        "warnings": [
+            "LLM topic expansion is not implemented yet; "
             "the original research topic was used."
         ],
-        "execution_log":["Topic-expansion placeholder completed."],
+        "execution_log": ["Topic-expansion placeholder completed."],
     }
 
 
-def find_universities(_:ResearchGraphState,)-> dict[str,object]:
-    """placeholder for official Australian university discovery."""
-    return{
+def find_universities(
+    _: ResearchGraphState,
+) -> dict[str, object]:
+    """Placeholder for official Australian university discovery."""
+
+    return {
         "candidate_universities": [],
         "warnings": [
             "University discovery is not implemented yet; "
@@ -100,8 +104,9 @@ def find_universities(_:ResearchGraphState,)-> dict[str,object]:
     }
 
 
- 
-def search_researchers(_: ResearchGraphState,) -> dict[str, object]:
+def search_researchers(
+    _: ResearchGraphState,
+) -> dict[str, object]:
     """Placeholder for official researcher-profile searches."""
 
     return {
@@ -138,7 +143,9 @@ def search_projects(_: ResearchGraphState) -> dict[str, object]:
     }
 
 
-def search_publications(_: ResearchGraphState,) -> dict[str, object]:
+def search_publications(
+    _: ResearchGraphState,
+) -> dict[str, object]:
     """Placeholder for publication searches."""
 
     return {
@@ -148,6 +155,7 @@ def search_publications(_: ResearchGraphState,) -> dict[str, object]:
         ],
         "execution_log": ["Publication-search placeholder completed."],
     }
+
 
 def verify_current_affiliation(
     _: ResearchGraphState,
