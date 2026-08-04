@@ -29,3 +29,23 @@ def route_after_university_discovery(
         return "generate_final_output"
 
     return "generate_search_queries"
+
+
+def route_after_search_query_generation(
+    state: ResearchGraphState,
+) -> Literal[
+    "search_researchers",
+    "generate_final_output",
+]:
+    """Continue only when search queries were created."""
+
+    search_queries = state.get(
+        "search_queries",
+        [],
+    )
+    errors = state.get("errors", [])
+
+    if errors or not search_queries:
+        return "generate_final_output"
+
+    return "search_researchers"
