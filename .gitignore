@@ -12,6 +12,9 @@ ENV/
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+secrets/
 
 # ──────────────────────────────────────────────
 # Python-generated files
@@ -22,6 +25,16 @@ __pycache__/
 *.egg-info/
 *.egg
 *.pyd
+*.so
+
+# ──────────────────────────────────────────────
+# Package / dependency management
+# ──────────────────────────────────────────────
+pip-log.txt
+pip-delete-this-directory.txt
+.pdm.toml
+.pdm-python
+__pypackages__/
 
 # ──────────────────────────────────────────────
 # Testing and linting
@@ -29,10 +42,14 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.dmypy.json
+dmypy.json
 .coverage
 .coverage.*
 coverage.xml
 htmlcov/
+.tox/
+.nox/
 
 # ──────────────────────────────────────────────
 # Build outputs
@@ -42,9 +59,11 @@ dist/
 wheels/
 *.whl
 *.tar.gz
+*.egg-info/
+MANIFEST
 
 # ──────────────────────────────────────────────
-# Local databases
+# Local databases (SQLite)
 # ──────────────────────────────────────────────
 *.db
 *.sqlite
@@ -54,9 +73,15 @@ wheels/
 # LangGraph / LangChain runtime
 # ──────────────────────────────────────────────
 .langgraph_cache/
+langchain_cache/
 
 # ──────────────────────────────────────────────
-# Jupyter notebooks (checkpoints)
+# Streamlit
+# ──────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ──────────────────────────────────────────────
+# Jupyter notebooks
 # ──────────────────────────────────────────────
 .ipynb_checkpoints/
 *.ipynb
@@ -70,13 +95,21 @@ logs/
 # ──────────────────────────────────────────────
 # Docker
 # ──────────────────────────────────────────────
-*.dockerignore
+.dockerignore
+docker-compose.override.yml
+
+# ──────────────────────────────────────────────
+# Profiling and benchmarking
+# ──────────────────────────────────────────────
+*.prof
+*.lprof
 
 # ──────────────────────────────────────────────
 # Operating system and editor files
 # ──────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+Desktop.ini
 .vscode/
 .idea/
 *.swp
