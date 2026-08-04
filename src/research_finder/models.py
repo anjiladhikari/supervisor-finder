@@ -129,6 +129,178 @@ class SearchRequest(StrictModel):
 
 
 
+class TopicExpansionDraft(StrictModel):
+    """structured topic expansion produced by the LLM."""
+    canonical_topic: str=Field(
+    min_length=3,
+    max_length=300,
+    description=(
+            "A concise academic formulation of the original "
+            "research topic."
+        ),
+    )
+
+    related_topics: list[str] = Field(
+        max_length=8,
+        description=(
+            "Closely related research concepts that preserve "
+            "the user's intended scope."
+        ),
+    )
+    broader_topics: list[str] = Field(
+        max_length=4,
+        description=(
+            "Broader research fields that may contain relevant "
+            "research groups."
+        ),
+    )
+
+
+    narrower_topics: list[str] = Field(
+        max_length=8,
+        description=(
+            "More specific research directions contained within "
+            "the original topic."
+        ),
+    )
+    methods_and_techniques: list[str] = Field(
+        max_length=8,
+        description=(
+            "Methods, algorithms, architectures or technical "
+            "approaches associated with the topic."
+        ),
+    )
+    application_areas: list[str] = Field(
+        max_length=6,
+        description=(
+            "Application areas in which the research topic may "
+            "be investigated."
+        ),
+    )
+    search_keywords: list[str] = Field(
+        max_length=15,
+        description=(
+            "Short keywords and phrases suitable for official "
+            "university website searches."
+        ),
+    )
+
+@field_validator("canonical_topic",mode="before")
+@classmethod
+def normalise_canonical_topic(cls,value:object,)-> object:
+    """Normalise whitespace and trailing punctuation."""
+    if isinstance(value,str):
+        return (" ".join(value.split()).strip(" ,.;:"))
+
+    return value
+
+
+    @field_validator(
+        "related_topics",
+        "broader_topics",
+        "narrower_topics",
+        "methods_and_techniques",
+        "application_areas",
+        "search_keywords",
+        mode="before",
+    )
+    @classmethod
+    def normalise_topic_lists(
+        cls,
+        value: object,
+    ) -> object:
+        """Clean and deduplicate one LLM-generated topic list."""
+
+        if not isinstance(value, list):
+            return value
+
+        cleaned_items: list[str] = []
+        seen_items: set[str] = set()
+
+        for item in value:
+            if not isinstance(item, str):
+                continue
+
+            cleaned_item = (
+                " ".join(item.split())
+                .strip(" ,.;:")
+            )
+
+            if not cleaned_item:
+                continue
+
+            comparison_key = cleaned_item.casefold()
+
+            if comparison_key in seen_items:
+                continue
+
+            seen_items.add(comparison_key)
+            cleaned_items.append(cleaned_item)
+
+        return cleaned_items
+
+
+class TopicExpansion(TopicExpansionDraft):
+    """Validated topic expansion stored in workflow state."""
+
+    original_topic: str = Field(
+        min_length=3,
+        max_length=300,
+    )
+
+    @field_validator("original_topic", mode="before")
+    @classmethod
+    def normalise_original_topic(
+        cls,
+        value: object,
+    ) -> object:
+        """Normalise the preserved user topic."""
+
+        if isinstance(value, str):
+            return " ".join(value.split())
+
+        return value
+
+    def to_search_terms(
+        self,
+        limit: int = 30,
+    ) -> list[str]:
+        """Create one ordered, duplicate-free search-term list."""
+
+        if limit < 1:
+            raise ValueError(
+                "Search-term limit must be at least 1."
+            )
+
+        ordered_terms = [
+            self.original_topic,
+            self.canonical_topic,
+            *self.related_topics,
+            *self.narrower_topics,
+            *self.methods_and_techniques,
+            *self.application_areas,
+            *self.broader_topics,
+            *self.search_keywords,
+        ]
+
+        unique_terms: list[str] = []
+        seen_terms: set[str] = set()
+
+        for term in ordered_terms:
+            comparison_key = term.casefold()
+
+            if comparison_key in seen_terms:
+                continue
+
+            seen_terms.add(comparison_key)
+            unique_terms.append(term)
+
+            if len(unique_terms) >= limit:
+                break
+
+        return unique_terms
+
+
 class EvidenceSource(StrictModel):
     """A source that supports one or more claims about a researcher."""
 
