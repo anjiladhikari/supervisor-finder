@@ -10,7 +10,9 @@ def main() -> None:
 
     request = SearchRequest(
         country="Australia",
+        country_code="AU",
         state="Victoria",
+        state_code="AU-VIC",
         research_topic=(
             "Reinforcement learning for time-series data"
         ),
