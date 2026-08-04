@@ -5,6 +5,7 @@ from research_finder.models import (
     ResearcherResult,
     SearchRequest,
     SearchResponse,
+    TopicExpansion,
 )
 
 
@@ -34,7 +35,9 @@ class ResearchGraphState(WorkflowMessages, total=False):
     raw_request: dict[str, object]
     request: SearchRequest | None
 
+    topic_expansion: TopicExpansion | None
     expanded_topics: list[str]
+    
     candidate_universities: list[str]
 
     researcher_pages: list[str]
