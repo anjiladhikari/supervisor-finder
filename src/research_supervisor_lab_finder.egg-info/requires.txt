@@ -4,6 +4,7 @@ langchain-groq
 langchain-ollama
 pydantic[email]
 pydantic-settings
+pycountry
 
 [dev]
 pytest
