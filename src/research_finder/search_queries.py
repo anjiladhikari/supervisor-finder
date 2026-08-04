@@ -1,23 +1,10 @@
 from __future__ import annotations
-
 from enum import StrEnum
-
 from pydantic import (
     Field,
     field_validator,
     model_validator,
 )
-
-from __future__ import annotations
-
-from enum import StrEnum
-
-from pydantic import (
-    Field,
-    field_validator,
-    model_validator,
-)
-
 from research_finder.models import StrictModel
 from research_finder.university_directory import (
     UniversityRecord,
