@@ -14,7 +14,8 @@ dependencies = [
     "langchain-groq",
     "langchain-ollama",
     "pydantic[email]",
-    "pydantic-settings"
+    "pydantic-settings",
+    "pycountry"
 ]
 
 [project.optional-dependencies]
@@ -25,7 +26,10 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
+[tool.setuptools.package-data]
+research_finder = [
+    "data/universities/*.json",
+]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
