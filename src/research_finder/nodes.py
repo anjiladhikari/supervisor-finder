@@ -23,12 +23,16 @@ from research_finder.university_directory import (
     get_universities,
     supports_country,
 )
-from research_finder.web_search import (
-    create_search_client,
-)
 from research_finder.web_content import (
     create_page_downloader,
     download_official_pages,
+)
+from research_finder.web_search import (
+    create_search_client,
+)
+
+from research_finder.researcher_extraction import (
+    extract_researcher_documents,
 )
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
@@ -477,6 +481,73 @@ def download_webpage_content(
             f"{document_count} documents created."
         )
     ]
+
+    return result
+
+
+
+
+def extract_researcher_information(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Extract structured researchers from downloaded pages."""
+
+    documents = list(
+        state.get(
+            "researcher_documents",
+            [],
+        )
+    )
+
+    if not documents:
+        return {
+            "extracted_candidates": [],
+            "warnings": [
+                (
+                    "No researcher documents were "
+                    "available for structured extraction."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Researcher extraction completed: "
+                    "0 documents processed, "
+                    "0 candidates created."
+                )
+            ],
+        }
+
+    model = create_chat_model()
+
+    outcome = extract_researcher_documents(
+        documents=documents,
+        model=model,
+    )
+
+    result: dict[str, object] = {
+        "extracted_candidates": list(
+            outcome.candidates
+        ),
+        "execution_log": [
+            (
+                "Researcher extraction completed: "
+                f"{outcome.attempted_documents} "
+                "documents processed, "
+                f"{len(outcome.candidates)} "
+                "candidates created."
+            )
+        ],
+    }
+
+    if outcome.failed_documents:
+        result["warnings"] = [
+            (
+                "Researcher extraction failed for "
+                f"{outcome.failed_documents} of "
+                f"{outcome.attempted_documents} "
+                "documents."
+            )
+        ]
 
     return result
 
