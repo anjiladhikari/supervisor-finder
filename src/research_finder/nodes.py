@@ -6,7 +6,11 @@ from research_finder.location import (
     resolve_location,
 )
 from research_finder.models import SearchRequest, SearchResponse
+from research_finder.official_page_search import (
+    execute_official_searches,
+)
 from research_finder.search_queries import (
+    SearchTarget,
     generate_official_search_queries,
 )
 from research_finder.state import ResearchGraphState
@@ -18,6 +22,9 @@ from research_finder.university_directory import (
     UniversityDirectoryError,
     get_universities,
     supports_country,
+)
+from research_finder.web_search import (
+    create_search_client,
 )
 
 
@@ -193,7 +200,7 @@ def find_universities(
         ],
     }
 
-    
+
 def generate_search_queries(
     state: ResearchGraphState,
 ) -> dict[str, object]:
@@ -211,29 +218,15 @@ def generate_search_queries(
     if not universities:
         return {
             "search_queries": [],
-            "errors": [
-                (
-                    "Search queries cannot be generated "
-                    "without candidate universities."
-                )
-            ],
-            "execution_log": [
-                "Search-query generation failed."
-            ],
+            "errors": [("Search queries cannot be generated without candidate universities.")],
+            "execution_log": ["Search-query generation failed."],
         }
 
     if not topics:
         return {
             "search_queries": [],
-            "errors": [
-                (
-                    "Search queries cannot be generated "
-                    "without expanded topics."
-                )
-            ],
-            "execution_log": [
-                "Search-query generation failed."
-            ],
+            "errors": [("Search queries cannot be generated without expanded topics.")],
+            "execution_log": ["Search-query generation failed."],
         }
 
     queries = generate_official_search_queries(
@@ -243,57 +236,133 @@ def generate_search_queries(
 
     return {
         "search_queries": queries,
+        "execution_log": [(f"Generated {len(queries)} official university-domain queries.")],
+    }
+
+
+_PAGE_STATE_KEYS = {
+    SearchTarget.RESEARCHER: "researcher_pages",
+    SearchTarget.LAB: "lab_pages",
+    SearchTarget.PROJECT: "project_pages",
+    SearchTarget.PUBLICATION: "publication_pages",
+}
+
+_PAGE_LABELS = {
+    SearchTarget.RESEARCHER: "Researcher",
+    SearchTarget.LAB: "Research-lab",
+    SearchTarget.PROJECT: "Research-project",
+    SearchTarget.PUBLICATION: "Publication",
+}
+
+
+def _search_official_pages(
+    state: ResearchGraphState,
+    target: SearchTarget,
+) -> dict[str, object]:
+    """Execute all official queries for one target."""
+
+    search_queries = state.get(
+        "search_queries",
+        [],
+    )
+    target_queries = [
+        search_query for search_query in search_queries if search_query.target == target
+    ]
+
+    state_key = _PAGE_STATE_KEYS[target]
+    label = _PAGE_LABELS[target]
+
+    if not target_queries:
+        return {
+            state_key: [],
+            "errors": [(f"No {target.value} search queries were available.")],
+            "execution_log": [f"{label} search failed."],
+        }
+
+    client = create_search_client()
+
+    outcome = execute_official_searches(
+        search_queries=target_queries,
+        target=target,
+        client=client,
+        max_results_per_query=3,
+    )
+
+    warnings: list[str] = []
+
+    if outcome.failed_queries:
+        warnings.append(
+            
+                f"{label} search failed for "
+                f"{outcome.failed_queries} of "
+                f"{outcome.attempted_queries} queries."
+            
+        )
+
+    if not outcome.pages:
+        warnings.append(f"No official {target.value} pages were found.")
+
+    result: dict[str, object] = {
+        state_key: list(outcome.pages),
+        "search_attempt_count": (state.get("search_attempt_count", 0) + outcome.attempted_queries),
         "execution_log": [
             (
-                f"Generated {len(queries)} official "
-                "university-domain queries."
+                f"{label} search completed: "
+                f"{outcome.attempted_queries} queries "
+                f"attempted, {len(outcome.pages)} "
+                "official pages found."
             )
         ],
     }
 
+    if warnings:
+        result["warnings"] = warnings
+
+    return result
+
+
 def search_researchers(
-    _: ResearchGraphState,
+    state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Placeholder for official researcher-profile searches."""
+    """Search official researcher-profile pages."""
 
-    return {
-        "researcher_pages": [],
-        "extracted_candidates": [],
-        "warnings": ["Researcher search is not implemented yet."],
-        "execution_log": ["Researcher-search placeholder completed."],
-    }
+    return _search_official_pages(
+        state,
+        SearchTarget.RESEARCHER,
+    )
 
 
-def search_labs(_: ResearchGraphState) -> dict[str, object]:
-    """Placeholder for research-lab and research-group searches."""
+def search_labs(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Search official research-lab pages."""
 
-    return {
-        "lab_pages": [],
-        "warnings": ["Research lab search is not implemented yet."],
-        "execution_log": ["Research-lab search placeholder completed."],
-    }
+    return _search_official_pages(
+        state,
+        SearchTarget.LAB,
+    )
 
 
-def search_projects(_: ResearchGraphState) -> dict[str, object]:
-    """Placeholder for current and previous project searches."""
+def search_projects(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Search official research-project pages."""
 
-    return {
-        "project_pages": [],
-        "warnings": ["Research project search is not implemented yet."],
-        "execution_log": ["Research-project search placeholder completed."],
-    }
+    return _search_official_pages(
+        state,
+        SearchTarget.PROJECT,
+    )
 
 
 def search_publications(
-    _: ResearchGraphState,
+    state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Placeholder for publication searches."""
+    """Search official publication pages."""
 
-    return {
-        "publication_pages": [],
-        "warnings": ["Publication search is not implemented yet."],
-        "execution_log": ["Publication-search placeholder completed."],
-    }
+    return _search_official_pages(
+        state,
+        SearchTarget.PUBLICATION,
+    )
 
 
 def verify_current_affiliation(
