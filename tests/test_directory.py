@@ -54,19 +54,14 @@ def test_unsupported_country_is_rejected() -> None:
             "raw_request": {
                 "country": "United States",
                 "state": "California",
-                "research_topic": (
-                    "Reinforcement learning"
-                ),
+                "research_topic": ("Reinforcement learning"),
             }
         }
     )
 
     assert result["request"] is None
 
-    assert any(
-        "not supported yet" in error
-        for error in result["errors"]
-    )
+    assert any("not supported yet" in error for error in result["errors"])
 
 
 def test_australia_has_42_universities() -> None:
@@ -83,10 +78,7 @@ def test_victoria_has_12_universities() -> None:
 
     assert len(universities) == 12
 
-    assert all(
-        "AU-VIC" in university.state_codes
-        for university in universities
-    )
+    assert all("AU-VIC" in university.state_codes for university in universities)
 
 
 def test_university_node_uses_state() -> None:
@@ -98,13 +90,9 @@ def test_university_node_uses_state() -> None:
         research_topic="Artificial intelligence",
     )
 
-    result = find_universities(
-        {"request": request}
-    )
+    result = find_universities({"request": request})
 
-    candidates = result[
-        "candidate_universities"
-    ]
+    candidates = result["candidate_universities"]
 
     assert len(candidates) == 12
 
@@ -117,10 +105,7 @@ def test_university_node_uses_state() -> None:
     )
 
     assert result["execution_log"] == [
-        (
-            "University directory selected "
-            "12 candidates for Victoria, Australia."
-        )
+        ("University directory selected 12 candidates for Victoria, Australia.")
     ]
 
 
@@ -133,17 +118,10 @@ def test_university_node_without_state_returns_all() -> None:
         research_topic="Artificial intelligence",
     )
 
-    result = find_universities(
-        {"request": request}
-    )
+    result = find_universities({"request": request})
 
-    assert len(
-        result["candidate_universities"]
-    ) == 42
+    assert len(result["candidate_universities"]) == 42
 
     assert result["execution_log"] == [
-        (
-            "University directory selected "
-            "42 candidates for Australia."
-        )
+        ("University directory selected 42 candidates for Australia.")
     ]

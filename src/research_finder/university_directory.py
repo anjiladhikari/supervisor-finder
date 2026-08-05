@@ -47,10 +47,7 @@ class UniversityRecord(StrictModel):
         domain = domain.removeprefix("www.")
 
         if "://" in domain or "/" in domain:
-            raise ValueError(
-                "official_domain must not contain "
-                "a scheme or path."
-            )
+            raise ValueError("official_domain must not contain a scheme or path.")
 
         return domain
 
@@ -67,10 +64,7 @@ class UniversityRecord(StrictModel):
 
         return list(
             dict.fromkeys(
-                item.strip().upper()
-                for item in value
-                if isinstance(item, str)
-                and item.strip()
+                item.strip().upper() for item in value if isinstance(item, str) and item.strip()
             )
         )
 
@@ -82,14 +76,8 @@ class UniversityRecord(StrictModel):
 
         expected_prefix = f"{self.country_code}-"
 
-        if any(
-            not state_code.startswith(expected_prefix)
-            for state_code in self.state_codes
-        ):
-            raise ValueError(
-                "University state codes must belong "
-                "to country_code."
-            )
+        if any(not state_code.startswith(expected_prefix) for state_code in self.state_codes):
+            raise ValueError("University state codes must belong to country_code.")
 
         return self
 
@@ -143,40 +131,26 @@ Western Sydney University|westernsydney.edu.au|AU-NSW|WSU
 
 
 @lru_cache
-def load_australian_universities(
-) -> tuple[UniversityRecord, ...]:
+def load_australian_universities() -> tuple[UniversityRecord, ...]:
     """Load the verified Australian university directory."""
 
     universities: list[UniversityRecord] = []
 
     for line in _AUSTRALIAN_UNIVERSITY_DATA.splitlines():
-        name, domain, state_text, alias_text = (
-            part.strip()
-            for part in line.split("|")
-        )
+        name, domain, state_text, alias_text = (part.strip() for part in line.split("|"))
 
         universities.append(
             UniversityRecord(
                 name=name,
-                aliases=[
-                    alias.strip()
-                    for alias in alias_text.split(";")
-                    if alias.strip()
-                ],
+                aliases=[alias.strip() for alias in alias_text.split(";") if alias.strip()],
                 country_code="AU",
-                state_codes=[
-                    code.strip()
-                    for code in state_text.split(",")
-                ],
+                state_codes=[code.strip() for code in state_text.split(",")],
                 official_domain=domain,
             )
         )
 
     if len(universities) != 42:
-        raise RuntimeError(
-            "Australian university directory "
-            "must contain 42 universities."
-        )
+        raise RuntimeError("Australian university directory must contain 42 universities.")
 
     return tuple(universities)
 
@@ -196,10 +170,7 @@ def get_universities(
     normalised_country = country_code.strip().upper()
 
     if normalised_country != "AU":
-        raise UniversityDirectoryError(
-            f"No university directory exists for "
-            f"{normalised_country}."
-        )
+        raise UniversityDirectoryError(f"No university directory exists for {normalised_country}.")
 
     universities = load_australian_universities()
 
@@ -209,7 +180,5 @@ def get_universities(
     normalised_state = state_code.strip().upper()
 
     return tuple(
-        university
-        for university in universities
-        if normalised_state in university.state_codes
+        university for university in universities if normalised_state in university.state_codes
     )

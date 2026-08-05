@@ -11,10 +11,7 @@ def main() -> None:
             "raw_request": {
                 "country": "Australia",
                 "state": "Victoria",
-                "research_topic": (
-                    "Reinforcement learning for "
-                    "early time-series classification"
-                ),
+                "research_topic": ("Reinforcement learning for early time-series classification"),
                 "max_results": 5,
             }
         }

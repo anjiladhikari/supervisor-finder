@@ -23,19 +23,14 @@ def test_search_request_normalises_input() -> None:
         country_code="au",
         state=" Victoria ",
         state_code="au-vic",
-        research_topic=(
-            "  reinforcement   learning "
-            "for time-series data  "
-        ),
+        research_topic=("  reinforcement   learning for time-series data  "),
     )
 
     assert request.country == "Australia"
     assert request.country_code == "AU"
     assert request.state == "Victoria"
     assert request.state_code == "AU-VIC"
-    assert request.research_topic == (
-        "reinforcement learning for time-series data"
-    )
+    assert request.research_topic == ("reinforcement learning for time-series data")
     assert request.max_results == 5
 
 
@@ -63,10 +58,6 @@ def test_search_request_rejects_unexpected_fields() -> None:
             research_topic="Reinforcement learning",
             unexpected_field="This must not be accepted",
         )
-
-
-
-
 
 
 def test_relevance_score_calculates_total() -> None:
@@ -105,7 +96,7 @@ def test_valid_researcher_result() -> None:
 
     publication = Publication(
         title="Reinforcement Learning for Early Time-Series Decisions",
-        year= datetime.now(UTC).year,
+        year=datetime.now(UTC).year,
         venue="Example Conference",
         url="https://example.edu.au/publication",
         relevance_reason=(
@@ -147,16 +138,13 @@ def test_valid_researcher_result() -> None:
     )
 
     response = SearchResponse(
-    request=SearchRequest(
-    country="Australia",
-    country_code="AU",
-    state="Victoria",
-    state_code="AU-VIC",
-    research_topic=(
-        "Reinforcement learning for "
-        "early time-series classification"
-    ),
-),
+        request=SearchRequest(
+            country="Australia",
+            country_code="AU",
+            state="Victoria",
+            state_code="AU-VIC",
+            research_topic=("Reinforcement learning for early time-series classification"),
+        ),
         results=[result],
     )
 
@@ -167,9 +155,7 @@ def test_valid_researcher_result() -> None:
     json_data = response.model_dump(mode="json")
 
     assert json_data["result_count"] == 1
-    assert json_data["results"][0]["public_email"] == (
-        "researcher@example.edu.au"
-    )
+    assert json_data["results"][0]["public_email"] == ("researcher@example.edu.au")
 
 
 def test_current_project_rejects_previous_status() -> None:
@@ -191,9 +177,7 @@ def test_current_project_rejects_previous_status() -> None:
             researcher_name="Example Researcher",
             university_name="Example University",
             current_projects=[incorrectly_categorised_project],
-            match_explanation=(
-                "This explanation is long enough to satisfy validation."
-            ),
+            match_explanation=("This explanation is long enough to satisfy validation."),
             relevance_score=RelevanceScore(
                 topic_similarity=10,
                 publication_relevance=0,

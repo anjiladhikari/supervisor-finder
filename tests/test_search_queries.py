@@ -24,9 +24,7 @@ def create_test_university() -> UniversityRecord:
 
 def test_generates_four_queries_per_university() -> None:
     queries = generate_official_search_queries(
-        universities=[
-            create_test_university()
-        ],
+        universities=[create_test_university()],
         topics=[
             "Reinforcement learning",
             "Early time-series classification",
@@ -35,42 +33,26 @@ def test_generates_four_queries_per_university() -> None:
 
     assert len(queries) == 4
 
-    assert {
-        query.target
-        for query in queries
-    } == set(SearchTarget)
+    assert {query.target for query in queries} == set(SearchTarget)
 
 
 def test_every_query_uses_official_domain() -> None:
     queries = generate_official_search_queries(
-        universities=[
-            create_test_university()
-        ],
+        universities=[create_test_university()],
         topics=[
             "Reinforcement learning",
             "Early time-series classification",
         ],
     )
 
-    assert all(
-        query.query.startswith(
-            "site:deakin.edu.au "
-        )
-        for query in queries
-    )
+    assert all(query.query.startswith("site:deakin.edu.au ") for query in queries)
 
-    assert all(
-        query.official_domain
-        == "deakin.edu.au"
-        for query in queries
-    )
+    assert all(query.official_domain == "deakin.edu.au" for query in queries)
 
 
 def test_query_topics_are_deduplicated() -> None:
     queries = generate_official_search_queries(
-        universities=[
-            create_test_university()
-        ],
+        universities=[create_test_university()],
         topics=[
             "Reinforcement learning",
             "reinforcement learning",
@@ -87,9 +69,7 @@ def test_query_topics_are_deduplicated() -> None:
 def test_node_generates_queries() -> None:
     result = generate_search_queries(
         {
-            "candidate_universities": [
-                create_test_university()
-            ],
+            "candidate_universities": [create_test_university()],
             "expanded_topics": [
                 "Reinforcement learning",
                 "Time-series classification",
@@ -99,29 +79,19 @@ def test_node_generates_queries() -> None:
 
     assert len(result["search_queries"]) == 4
 
-    assert result["execution_log"] == [
-        (
-            "Generated 4 official "
-            "university-domain queries."
-        )
-    ]
+    assert result["execution_log"] == [("Generated 4 official university-domain queries.")]
 
 
 def test_node_requires_universities() -> None:
     result = generate_search_queries(
         {
             "candidate_universities": [],
-            "expanded_topics": [
-                "Reinforcement learning"
-            ],
+            "expanded_topics": ["Reinforcement learning"],
         }
     )
 
     assert result["search_queries"] == []
 
     assert result["errors"] == [
-        (
-            "Search queries cannot be generated "
-            "without candidate universities."
-        )
+        ("Search queries cannot be generated without candidate universities.")
     ]

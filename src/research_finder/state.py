@@ -10,6 +10,9 @@ from research_finder.models import (
 from research_finder.official_page_search import (
     OfficialSearchPage,
 )
+from research_finder.researcher_extraction import (
+    ResearcherCandidate,
+)
 from research_finder.search_queries import (
     OfficialSearchQuery,
 )
@@ -18,9 +21,7 @@ from research_finder.web_content import (
     DownloadedWebPage,
 )
 
-from research_finder.researcher_extraction import (
-    ResearcherCandidate,
-)
+
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
 

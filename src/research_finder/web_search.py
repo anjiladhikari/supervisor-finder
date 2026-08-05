@@ -96,9 +96,7 @@ def _clean_text(value: object) -> str:
     if not isinstance(value, str):
         return ""
 
-    return " ".join(
-        unescape(value).split()
-    )
+    return " ".join(unescape(value).split())
 
 
 class DDGSSearchClient:
@@ -130,9 +128,7 @@ class DDGSSearchClient:
         """Search the web with bounded retry behaviour."""
 
         max_results = (
-            request.max_results
-            if request.max_results is not None
-            else self.default_max_results
+            request.max_results if request.max_results is not None else self.default_max_results
         )
 
         raw_results = self._search_with_retries(
@@ -155,13 +151,9 @@ class DDGSSearchClient:
 
         last_error: DDGSException | None = None
 
-        for attempt in range(
-            self.max_retries + 1
-        ):
+        for attempt in range(self.max_retries + 1):
             try:
-                searcher = self.ddgs_factory(
-                    timeout=self.timeout_seconds
-                )
+                searcher = self.ddgs_factory(timeout=self.timeout_seconds)
 
                 return searcher.text(
                     query,
@@ -183,8 +175,7 @@ class DDGSSearchClient:
                 self.sleeper(retry_delay)
 
         raise WebSearchError(
-            "Web search failed after "
-            f"{self.max_retries + 1} attempts."
+            f"Web search failed after {self.max_retries + 1} attempts."
         ) from last_error
 
     @staticmethod
@@ -199,15 +190,9 @@ class DDGSSearchClient:
         seen_urls: set[str] = set()
 
         for raw_result in raw_results:
-            title = _clean_text(
-                raw_result.get("title")
-            )
-            url = _clean_text(
-                raw_result.get("href")
-            )
-            snippet = _clean_text(
-                raw_result.get("body")
-            )
+            title = _clean_text(raw_result.get("title"))
+            url = _clean_text(raw_result.get("href"))
+            snippet = _clean_text(raw_result.get("body"))
 
             try:
                 result = WebSearchResult(
@@ -219,11 +204,7 @@ class DDGSSearchClient:
             except ValidationError:
                 continue
 
-            url_key = (
-                str(result.url)
-                .rstrip("/")
-                .casefold()
-            )
+            url_key = str(result.url).rstrip("/").casefold()
 
             if url_key in seen_urls:
                 continue
@@ -246,16 +227,8 @@ def create_search_client(
 
     return DDGSSearchClient(
         region=resolved_settings.search_region,
-        safesearch=(
-            resolved_settings.search_safesearch.value
-        ),
-        timeout_seconds=(
-            resolved_settings.search_timeout_seconds
-        ),
-        max_retries=(
-            resolved_settings.search_max_retries
-        ),
-        default_max_results=(
-            resolved_settings.search_max_results
-        ),
+        safesearch=(resolved_settings.search_safesearch.value),
+        timeout_seconds=(resolved_settings.search_timeout_seconds),
+        max_retries=(resolved_settings.search_max_retries),
+        default_max_results=(resolved_settings.search_max_results),
     )

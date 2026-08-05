@@ -18,10 +18,7 @@ from research_finder.web_content import (
 
 
 def create_page(
-    url: str = (
-        "https://www.deakin.edu.au/"
-        "research/profile"
-    ),
+    url: str = ("https://www.deakin.edu.au/research/profile"),
 ) -> OfficialSearchPage:
     """Create one official search page."""
 
@@ -33,10 +30,7 @@ def create_page(
         url=url,
         snippet="Research information.",
         result_rank=1,
-        search_query=(
-            "site:deakin.edu.au "
-            '"reinforcement learning" researcher'
-        ),
+        search_query=('site:deakin.edu.au "reinforcement learning" researcher'),
     )
 
 
@@ -47,26 +41,16 @@ def create_document() -> DownloadedWebPage:
         university_name="Deakin University",
         official_domain="deakin.edu.au",
         target=SearchTarget.RESEARCHER,
-        source_url=(
-            "https://www.deakin.edu.au/"
-            "research/profile"
-        ),
-        final_url=(
-            "https://www.deakin.edu.au/"
-            "research/profile"
-        ),
+        source_url=("https://www.deakin.edu.au/research/profile"),
+        final_url=("https://www.deakin.edu.au/research/profile"),
         page_title="Research profile",
-        content=(
-            "Dr Example researches "
-            "reinforcement learning."
-        ),
+        content=("Dr Example researches reinforcement learning."),
         content_type="text/html",
         status_code=200,
     )
 
 
-def test_clean_html_removes_navigation_and_scripts(
-) -> None:
+def test_clean_html_removes_navigation_and_scripts() -> None:
     html = """
     <html>
       <head>
@@ -101,11 +85,7 @@ def test_downloader_returns_clean_document() -> None:
         return httpx.Response(
             200,
             request=request,
-            headers={
-                "content-type": (
-                    "text/html; charset=utf-8"
-                )
-            },
+            headers={"content-type": ("text/html; charset=utf-8")},
             text="""
                 <html>
                   <title>Research profile</title>
@@ -123,16 +103,12 @@ def test_downloader_returns_clean_document() -> None:
         sleeper=lambda _: None,
     )
 
-    document = downloader.download(
-        create_page()
-    )
+    document = downloader.download(create_page())
 
     assert document.status_code == 200
     assert document.page_title == "Research profile"
     assert "Dr Example" in document.content
-    assert document.official_domain == (
-        "deakin.edu.au"
-    )
+    assert document.official_domain == ("deakin.edu.au")
 
 
 def test_downloader_rejects_non_html() -> None:
@@ -142,9 +118,7 @@ def test_downloader_rejects_non_html() -> None:
         return httpx.Response(
             200,
             request=request,
-            headers={
-                "content-type": "application/pdf"
-            },
+            headers={"content-type": "application/pdf"},
             content=b"%PDF-example",
         )
 
@@ -156,34 +130,24 @@ def test_downloader_rejects_non_html() -> None:
         WebPageDownloadError,
         match="Unsupported content type",
     ):
-        downloader.download(
-            create_page()
-        )
+        downloader.download(create_page())
 
 
 def test_downloader_rejects_external_redirect() -> None:
     def handler(
         request: httpx.Request,
     ) -> httpx.Response:
-        if request.url.host == (
-            "www.deakin.edu.au"
-        ):
+        if request.url.host == ("www.deakin.edu.au"):
             return httpx.Response(
                 302,
                 request=request,
-                headers={
-                    "location": (
-                        "https://example.com/profile"
-                    )
-                },
+                headers={"location": ("https://example.com/profile")},
             )
 
         return httpx.Response(
             200,
             request=request,
-            headers={
-                "content-type": "text/html"
-            },
+            headers={"content-type": "text/html"},
             text="<main>External content</main>",
         )
 
@@ -195,9 +159,7 @@ def test_downloader_rejects_external_redirect() -> None:
         WebPageDownloadError,
         match="redirected outside",
     ):
-        downloader.download(
-            create_page()
-        )
+        downloader.download(create_page())
 
 
 def test_batch_continues_after_one_failure() -> None:
@@ -212,20 +174,14 @@ def test_batch_continues_after_one_failure() -> None:
             self.calls += 1
 
             if self.calls == 1:
-                raise WebPageDownloadError(
-                    "Simulated failure"
-                )
+                raise WebPageDownloadError("Simulated failure")
 
             return create_document()
 
     outcome = download_official_pages(
         pages=[
-            create_page(
-                "https://www.deakin.edu.au/page-one"
-            ),
-            create_page(
-                "https://www.deakin.edu.au/page-two"
-            ),
+            create_page("https://www.deakin.edu.au/page-one"),
+            create_page("https://www.deakin.edu.au/page-two"),
         ],
         downloader=FakeDownloader(),
     )
@@ -251,28 +207,18 @@ def test_download_node_stores_documents(
         lambda: FakeDownloader(),
     )
 
-    result = (
-        nodes_module.download_webpage_content(
-            {
-                "researcher_pages": [
-                    create_page()
-                ],
-                "lab_pages": [],
-                "project_pages": [],
-                "publication_pages": [],
-                "download_attempt_count": 0,
-            }
-        )
+    result = nodes_module.download_webpage_content(
+        {
+            "researcher_pages": [create_page()],
+            "lab_pages": [],
+            "project_pages": [],
+            "publication_pages": [],
+            "download_attempt_count": 0,
+        }
     )
 
-    assert len(
-        result["researcher_documents"]
-    ) == 1
+    assert len(result["researcher_documents"]) == 1
     assert result["download_attempt_count"] == 1
     assert result["execution_log"] == [
-        (
-            "Webpage download completed: "
-            "1 pages attempted, "
-            "1 documents created."
-        )
+        ("Webpage download completed: 1 pages attempted, 1 documents created.")
     ]

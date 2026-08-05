@@ -37,8 +37,7 @@ def build_topic_expansion_messages(
     """Build provider-independent topic-expansion messages."""
 
     if request.state is None:
-        state_scope = (f"All Australian states and territories"
-        f"{request.country}")
+        state_scope = f"All Australian states and territories{request.country}"
     else:
         state_scope = request.state
 
@@ -78,16 +77,12 @@ def generate_topic_expansion(
         method="json_schema",
     )
 
-    raw_response = structured_model.invoke(
-        build_topic_expansion_messages(request)
-    )
+    raw_response = structured_model.invoke(build_topic_expansion_messages(request))
 
     if isinstance(raw_response, TopicExpansionDraft):
         draft = raw_response
     else:
-        draft = TopicExpansionDraft.model_validate(
-            raw_response
-        )
+        draft = TopicExpansionDraft.model_validate(raw_response)
 
     return TopicExpansion(
         original_topic=request.research_topic,

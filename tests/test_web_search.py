@@ -44,16 +44,9 @@ class FakeDDGS:
 
 
 def test_search_request_normalises_query() -> None:
-    request = WebSearchRequest(
-        query=(
-            "  reinforcement   learning "
-            "researcher  "
-        )
-    )
+    request = WebSearchRequest(query=("  reinforcement   learning researcher  "))
 
-    assert request.query == (
-        "reinforcement learning researcher"
-    )
+    assert request.query == ("reinforcement learning researcher")
 
 
 def test_search_request_rejects_empty_query() -> None:
@@ -61,25 +54,18 @@ def test_search_request_rejects_empty_query() -> None:
         WebSearchRequest(query="  ")
 
 
-def test_search_normalises_and_deduplicates_results(
-) -> None:
+def test_search_normalises_and_deduplicates_results() -> None:
     fake_ddgs = FakeDDGS(
         responses=[
             [
                 {
                     "title": " Deakin Research ",
-                    "href": (
-                        "https://www.deakin.edu.au/"
-                        "research"
-                    ),
+                    "href": ("https://www.deakin.edu.au/research"),
                     "body": " Research information. ",
                 },
                 {
                     "title": "Duplicate",
-                    "href": (
-                        "https://www.deakin.edu.au/"
-                        "research/"
-                    ),
+                    "href": ("https://www.deakin.edu.au/research/"),
                     "body": "Duplicate result.",
                 },
                 {
@@ -105,9 +91,7 @@ def test_search_normalises_and_deduplicates_results(
 
     assert len(results) == 1
     assert results[0].title == "Deakin Research"
-    assert results[0].snippet == (
-        "Research information."
-    )
+    assert results[0].snippet == ("Research information.")
     assert results[0].rank == 1
 
 
@@ -130,15 +114,9 @@ def test_search_uses_default_result_limit() -> None:
         sleeper=lambda _: None,
     )
 
-    client.search(
-        WebSearchRequest(
-            query="Example search"
-        )
-    )
+    client.search(WebSearchRequest(query="Example search"))
 
-    assert fake_ddgs.calls[0][
-        "max_results"
-    ] == 7
+    assert fake_ddgs.calls[0]["max_results"] == 7
 
 
 def test_search_retries_temporary_failure() -> None:
@@ -162,11 +140,7 @@ def test_search_retries_temporary_failure() -> None:
         sleeper=delays.append,
     )
 
-    results = client.search(
-        WebSearchRequest(
-            query="Example search"
-        )
-    )
+    results = client.search(WebSearchRequest(query="Example search"))
 
     assert len(results) == 1
     assert len(fake_ddgs.calls) == 2
@@ -191,8 +165,4 @@ def test_search_raises_after_all_retries() -> None:
         WebSearchError,
         match="failed after 2 attempts",
     ):
-        client.search(
-            WebSearchRequest(
-                query="Example search"
-            )
-        )
+        client.search(WebSearchRequest(query="Example search"))

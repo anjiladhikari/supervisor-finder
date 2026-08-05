@@ -110,11 +110,7 @@ def test_graph_returns_valid_empty_response(
         ("Research-project search completed: 12 queries attempted, 0 official pages found."),
         ("Publication search completed: 12 queries attempted, 0 official pages found."),
         ("Webpage download completed: 0 pages attempted, 0 documents created."),
-        (
-            "Researcher extraction completed: "
-            "0 documents processed, "
-            "0 candidates created."
-        ),
+        ("Researcher extraction completed: 0 documents processed, 0 candidates created."),
         ("Affiliation-verification placeholder completed."),
         "Relevance-scoring placeholder completed.",
         "Duplicate removal completed.",

@@ -55,9 +55,7 @@ class DownloadedWebPage(StrictModel):
         ge=200,
         lt=400,
     )
-    downloaded_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC)
-    )
+    downloaded_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass(frozen=True)
@@ -100,9 +98,7 @@ _BLOCKED_TAGS = (
 def _normalise_text(value: str) -> str:
     """Collapse repeated whitespace."""
 
-    return " ".join(
-        unescape(value).split()
-    )
+    return " ".join(unescape(value).split())
 
 
 def _uses_official_domain(
@@ -116,20 +112,11 @@ def _uses_official_domain(
     if hostname is None:
         return False
 
-    normalised_hostname = (
-        hostname.casefold()
-        .removeprefix("www.")
-    )
-    normalised_domain = (
-        official_domain.casefold()
-        .removeprefix("www.")
-    )
+    normalised_hostname = hostname.casefold().removeprefix("www.")
+    normalised_domain = official_domain.casefold().removeprefix("www.")
 
-    return (
-        normalised_hostname == normalised_domain
-        or normalised_hostname.endswith(
-            f".{normalised_domain}"
-        )
+    return normalised_hostname == normalised_domain or normalised_hostname.endswith(
+        f".{normalised_domain}"
     )
 
 
@@ -146,21 +133,14 @@ def clean_html_content(
     )
 
     if soup.title is not None:
-        title = _normalise_text(
-            soup.title.get_text(" ", strip=True)
-        )
+        title = _normalise_text(soup.title.get_text(" ", strip=True))
     else:
         title = ""
 
     for tag in soup.find_all(_BLOCKED_TAGS):
         tag.decompose()
 
-    content_root = (
-        soup.find("main")
-        or soup.find("article")
-        or soup.body
-        or soup
-    )
+    content_root = soup.find("main") or soup.find("article") or soup.body or soup
 
     lines: list[str] = []
     previous_line: str | None = None
@@ -208,9 +188,7 @@ class WebPageDownloader:
 
         last_error: httpx.HTTPError | None = None
 
-        for attempt in range(
-            self.max_retries + 1
-        ):
+        for attempt in range(self.max_retries + 1):
             try:
                 return self._download_once(page)
             except httpx.HTTPError as error:
@@ -219,13 +197,10 @@ class WebPageDownloader:
                 if attempt >= self.max_retries:
                     break
 
-                self.sleeper(
-                    min(2**attempt, 4)
-                )
+                self.sleeper(min(2**attempt, 4))
 
         raise WebPageDownloadError(
-            "Webpage download failed after "
-            f"{self.max_retries + 1} attempts."
+            f"Webpage download failed after {self.max_retries + 1} attempts."
         ) from last_error
 
     def _download_once(
@@ -237,17 +212,10 @@ class WebPageDownloader:
         with httpx.Client(
             timeout=self.timeout_seconds,
             follow_redirects=True,
-            headers={
-                "User-Agent": (
-                    "ResearchSupervisorFinder/0.1 "
-                    "(academic research discovery)"
-                )
-            },
+            headers={"User-Agent": ("ResearchSupervisorFinder/0.1 (academic research discovery)")},
             transport=self.transport,
         ) as client:
-            response = client.get(
-                str(page.url)
-            )
+            response = client.get(str(page.url))
             response.raise_for_status()
 
         final_url = str(response.url)
@@ -257,63 +225,39 @@ class WebPageDownloader:
             page.official_domain,
         ):
             raise WebPageDownloadError(
-                "The webpage redirected outside the "
-                "official university domain."
+                "The webpage redirected outside the official university domain."
             )
 
-        content_type = (
-            response.headers
-            .get("content-type", "")
-            .split(";")[0]
-            .strip()
-            .casefold()
-        )
+        content_type = response.headers.get("content-type", "").split(";")[0].strip().casefold()
 
         if content_type and content_type not in {
             "text/html",
             "application/xhtml+xml",
         }:
-            raise WebPageDownloadError(
-                f"Unsupported content type: "
-                f"{content_type}."
-            )
+            raise WebPageDownloadError(f"Unsupported content type: {content_type}.")
 
         if response.content.startswith(b"%PDF"):
-            raise WebPageDownloadError(
-                "PDF content is not handled in Step 10."
-            )
+            raise WebPageDownloadError("PDF content is not handled in Step 10.")
 
-        content_length = response.headers.get(
-            "content-length"
-        )
+        content_length = response.headers.get("content-length")
 
         if (
             content_length is not None
             and content_length.isdigit()
             and int(content_length) > self.max_bytes
         ):
-            raise WebPageDownloadError(
-                "Webpage exceeds the download limit."
-            )
+            raise WebPageDownloadError("Webpage exceeds the download limit.")
 
         if len(response.content) > self.max_bytes:
-            raise WebPageDownloadError(
-                "Webpage exceeds the download limit."
-            )
+            raise WebPageDownloadError("Webpage exceeds the download limit.")
 
-        page_title, clean_content = (
-            clean_html_content(
-                response.text,
-                max_characters=(
-                    self.max_text_characters
-                ),
-            )
+        page_title, clean_content = clean_html_content(
+            response.text,
+            max_characters=(self.max_text_characters),
         )
 
         if not clean_content:
-            raise WebPageDownloadError(
-                "Webpage did not contain readable text."
-            )
+            raise WebPageDownloadError("Webpage did not contain readable text.")
 
         return DownloadedWebPage(
             university_name=page.university_name,
@@ -323,9 +267,7 @@ class WebPageDownloader:
             final_url=final_url,
             page_title=page_title or page.title,
             content=clean_content,
-            content_type=(
-                content_type or "text/html"
-            ),
+            content_type=(content_type or "text/html"),
             status_code=response.status_code,
         )
 
@@ -347,11 +289,7 @@ def download_official_pages(
             failed_pages += 1
             continue
 
-        url_key = (
-            str(document.final_url)
-            .rstrip("/")
-            .casefold()
-        )
+        url_key = str(document.final_url).rstrip("/").casefold()
 
         if url_key in seen_urls:
             continue

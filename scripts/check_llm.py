@@ -24,8 +24,10 @@ def main() -> None:
         [
             (
                 "system",
-                ("You are performing an API connection test. "
-                "Reply briefly and do not add an explanation."),
+                (
+                    "You are performing an API connection test. "
+                    "Reply briefly and do not add an explanation."
+                ),
             ),
             (
                 "human",
@@ -42,9 +44,7 @@ def main() -> None:
         response_text = str(content).strip()
 
     if not response_text:
-        raise RuntimeError(
-            "The LLM API returned an empty response."
-        )
+        raise RuntimeError("The LLM API returned an empty response.")
 
     print(f"Response: {response_text}")
 

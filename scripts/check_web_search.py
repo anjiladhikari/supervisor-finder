@@ -10,10 +10,7 @@ def main() -> None:
     client = create_search_client()
 
     request = WebSearchRequest(
-        query=(
-            "Deakin University reinforcement learning "
-            "researcher"
-        ),
+        query=("Deakin University reinforcement learning researcher"),
         max_results=5,
     )
 

@@ -55,9 +55,7 @@ def create_test_request() -> SearchRequest:
         country_code="AU",
         state="Victoria",
         state_code="AU-VIC",
-        research_topic=(
-            "Reinforcement learning for time-series data"
-        ),
+        research_topic=("Reinforcement learning for time-series data"),
     )
 
 
@@ -65,9 +63,7 @@ def create_test_draft() -> TopicExpansionDraft:
     """Create one reusable structured LLM response."""
 
     return TopicExpansionDraft(
-        canonical_topic=(
-            "Reinforcement learning for time-series analysis"
-        ),
+        canonical_topic=("Reinforcement learning for time-series analysis"),
         related_topics=[
             "Deep reinforcement learning",
             "Sequential decision-making",
@@ -95,12 +91,8 @@ def create_test_draft() -> TopicExpansionDraft:
 
 def test_search_terms_preserve_order_and_remove_duplicates() -> None:
     expansion = TopicExpansion(
-        original_topic=(
-            "Reinforcement learning for time-series data"
-        ),
-        canonical_topic=(
-            "Reinforcement learning for time-series analysis"
-        ),
+        original_topic=("Reinforcement learning for time-series data"),
+        canonical_topic=("Reinforcement learning for time-series analysis"),
         related_topics=[
             "Deep reinforcement learning",
             "deep reinforcement learning",
@@ -148,19 +140,13 @@ def test_generate_expansion_uses_json_schema() -> None:
     assert fake_model.structured_kwargs == {
         "method": "json_schema",
     }
-    assert expansion.original_topic == (
-        "Reinforcement learning for time-series data"
-    )
-    assert expansion.canonical_topic == (
-        "Reinforcement learning for time-series analysis"
-    )
+    assert expansion.original_topic == ("Reinforcement learning for time-series data")
+    assert expansion.canonical_topic == ("Reinforcement learning for time-series analysis")
 
 
 def test_generate_expansion_accepts_dictionary_response() -> None:
     request = create_test_request()
-    fake_model = FakeChatModel(
-        create_test_draft().model_dump()
-    )
+    fake_model = FakeChatModel(create_test_draft().model_dump())
 
     expansion = generate_topic_expansion(
         request=request,
@@ -186,19 +172,13 @@ def test_node_returns_structured_topic_expansion(
         lambda: fake_model,
     )
 
-    result = nodes_module.expand_research_topic(
-        {"request": request}
-    )
+    result = nodes_module.expand_research_topic({"request": request})
 
     expansion = result["topic_expansion"]
 
     assert isinstance(expansion, TopicExpansion)
-    assert result["expanded_topics"][0] == (
-        "Reinforcement learning for time-series data"
-    )
-    assert result["execution_log"] == [
-        "Structured topic expansion completed."
-    ]
+    assert result["expanded_topics"][0] == ("Reinforcement learning for time-series data")
+    assert result["execution_log"] == ["Structured topic expansion completed."]
     assert "warnings" not in result
 
 
@@ -206,9 +186,7 @@ def test_node_uses_fallback_when_llm_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     request = create_test_request()
-    fake_model = FakeChatModel(
-        RuntimeError("Simulated API failure")
-    )
+    fake_model = FakeChatModel(RuntimeError("Simulated API failure"))
 
     monkeypatch.setattr(
         nodes_module,
@@ -216,60 +194,33 @@ def test_node_uses_fallback_when_llm_fails(
         lambda: fake_model,
     )
 
-    result = nodes_module.expand_research_topic(
-        {"request": request}
-    )
+    result = nodes_module.expand_research_topic({"request": request})
 
     expansion = result["topic_expansion"]
 
     assert isinstance(expansion, TopicExpansion)
-    assert result["expanded_topics"] == [
-        "Reinforcement learning for time-series data"
-    ]
-    assert any(
-        "RuntimeError" in warning
-        for warning in result["warnings"]
-    )
-    assert result["execution_log"] == [
-        (
-            "Topic expansion completed with "
-            "deterministic fallback."
-        )
-    ]
+    assert result["expanded_topics"] == ["Reinforcement learning for time-series data"]
+    assert any("RuntimeError" in warning for warning in result["warnings"])
+    assert result["execution_log"] == [("Topic expansion completed with deterministic fallback.")]
 
 
 def test_node_rejects_missing_validated_request() -> None:
     result = nodes_module.expand_research_topic({})
 
-    assert result["errors"] == [
-        (
-            "Topic expansion cannot run without "
-            "a validated request."
-        )
-    ]
-    assert result["execution_log"] == [
-        "Topic expansion failed."
-    ]
+    assert result["errors"] == [("Topic expansion cannot run without a validated request.")]
+    assert result["execution_log"] == ["Topic expansion failed."]
 
 
 def test_fallback_uses_only_original_topic() -> None:
     request = create_test_request()
 
-    expansion = create_fallback_topic_expansion(
-        request
-    )
+    expansion = create_fallback_topic_expansion(request)
 
-    assert expansion.original_topic == (
-        request.research_topic
-    )
-    assert expansion.canonical_topic == (
-        request.research_topic
-    )
+    assert expansion.original_topic == (request.research_topic)
+    assert expansion.canonical_topic == (request.research_topic)
     assert expansion.related_topics == []
     assert expansion.broader_topics == []
     assert expansion.narrower_topics == []
     assert expansion.methods_and_techniques == []
     assert expansion.application_areas == []
-    assert expansion.to_search_terms() == [
-        request.research_topic
-    ]
+    assert expansion.to_search_terms() == [request.research_topic]

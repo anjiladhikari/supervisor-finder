@@ -35,9 +35,7 @@ def main() -> None:
 
     queries = generate_official_search_queries(
         universities=universities,
-        topics=[
-            "Reinforcement learning"
-        ],
+        topics=["Reinforcement learning"],
     )
 
     search_outcome = execute_official_searches(
@@ -58,19 +56,15 @@ def main() -> None:
         downloader=create_page_downloader(),
     )
 
-    documents = list(
-        download_outcome.documents
-    )
+    documents = list(download_outcome.documents)
 
     if not documents:
         print("No researcher documents downloaded.")
         return
 
-    extraction_outcome = (
-        extract_researcher_documents(
-            documents=documents,
-            model=create_chat_model(),
-        )
+    extraction_outcome = extract_researcher_documents(
+        documents=documents,
+        model=create_chat_model(),
     )
 
     print(
@@ -86,9 +80,7 @@ def main() -> None:
         len(extraction_outcome.candidates),
     )
 
-    for candidate in (
-        extraction_outcome.candidates
-    ):
+    for candidate in extraction_outcome.candidates:
         print()
         print(candidate.full_name)
         print(candidate.academic_title)

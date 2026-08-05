@@ -29,9 +29,7 @@ def main() -> None:
 
     queries = generate_official_search_queries(
         universities=universities,
-        topics=[
-            "Reinforcement learning"
-        ],
+        topics=["Reinforcement learning"],
     )
 
     search_outcome = execute_official_searches(
@@ -41,9 +39,7 @@ def main() -> None:
         max_results_per_query=2,
     )
 
-    pages = list(
-        search_outcome.pages[:3]
-    )
+    pages = list(search_outcome.pages[:3])
 
     if not pages:
         print("No official pages were found.")
@@ -54,28 +50,16 @@ def main() -> None:
         downloader=create_page_downloader(),
     )
 
-    print(
-        f"Pages attempted: "
-        f"{download_outcome.attempted_pages}"
-    )
-    print(
-        f"Pages failed: "
-        f"{download_outcome.failed_pages}"
-    )
-    print(
-        f"Documents created: "
-        f"{len(download_outcome.documents)}"
-    )
+    print(f"Pages attempted: {download_outcome.attempted_pages}")
+    print(f"Pages failed: {download_outcome.failed_pages}")
+    print(f"Documents created: {len(download_outcome.documents)}")
 
     for document in download_outcome.documents:
         print()
         print(document.university_name)
         print(document.page_title)
         print(document.final_url)
-        print(
-            f"Characters: "
-            f"{len(document.content)}"
-        )
+        print(f"Characters: {len(document.content)}")
         print(document.content[:500])
 
 

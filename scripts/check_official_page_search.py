@@ -25,12 +25,7 @@ def main() -> None:
 
     queries = generate_official_search_queries(
         universities=universities,
-        topics=[
-            (
-                "Reinforcement learning for "
-                "time-series data"
-            )
-        ],
+        topics=[("Reinforcement learning for time-series data")],
     )
 
     outcome = execute_official_searches(
@@ -40,18 +35,9 @@ def main() -> None:
         max_results_per_query=3,
     )
 
-    print(
-        f"Queries attempted: "
-        f"{outcome.attempted_queries}"
-    )
-    print(
-        f"Queries failed: "
-        f"{outcome.failed_queries}"
-    )
-    print(
-        f"Official pages: "
-        f"{len(outcome.pages)}"
-    )
+    print(f"Queries attempted: {outcome.attempted_queries}")
+    print(f"Queries failed: {outcome.failed_queries}")
+    print(f"Official pages: {len(outcome.pages)}")
 
     for page in outcome.pages:
         print()

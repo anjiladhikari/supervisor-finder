@@ -65,39 +65,26 @@ def resolve_state(
     upper_value = cleaned_value.upper()
 
     if "-" in upper_value:
-        subdivision = pycountry.subdivisions.get(
-            code=upper_value
-        )
+        subdivision = pycountry.subdivisions.get(code=upper_value)
     else:
-        subdivision = pycountry.subdivisions.get(
-            code=f"{country_code}-{upper_value}"
-        )
+        subdivision = pycountry.subdivisions.get(code=f"{country_code}-{upper_value}")
 
     if subdivision is None:
-        subdivisions = pycountry.subdivisions.get(
-            country_code=country_code
-        )
+        subdivisions = pycountry.subdivisions.get(country_code=country_code)
 
         subdivision = next(
             (
                 candidate
                 for candidate in subdivisions
-                if candidate.name.casefold()
-                == cleaned_value.casefold()
+                if candidate.name.casefold() == cleaned_value.casefold()
             ),
             None,
         )
 
-    if (
-        subdivision is None
-        or subdivision.country_code != country_code
-    ):
+    if subdivision is None or subdivision.country_code != country_code:
         raise LocationLookupError(
             "state",
-            (
-                f"Unknown state {cleaned_value!r} "
-                f"for country {country_code}."
-            ),
+            (f"Unknown state {cleaned_value!r} for country {country_code}."),
         )
 
     return subdivision.name, subdivision.code

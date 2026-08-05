@@ -3,6 +3,7 @@ from langgraph.graph import END, START, StateGraph
 from research_finder.nodes import (
     download_webpage_content,
     expand_research_topic,
+    extract_researcher_information,
     find_universities,
     generate_final_output,
     generate_search_queries,
@@ -16,7 +17,6 @@ from research_finder.nodes import (
     search_researchers,
     validate_input,
     verify_current_affiliation,
-    extract_researcher_information,
 )
 from research_finder.routes import (
     route_after_search_query_generation,
@@ -57,9 +57,9 @@ def build_research_graph():
         download_webpage_content,
     )
     builder.add_node(
-    "extract_researcher_information",
-    extract_researcher_information,
-)
+        "extract_researcher_information",
+        extract_researcher_information,
+    )
     builder.add_node("score_relevance", score_relevance)
     builder.add_node("remove_duplicates", remove_duplicates)
     builder.add_node("rank_results", rank_results)
@@ -99,9 +99,9 @@ def build_research_graph():
     )
 
     builder.add_edge(
-    "extract_researcher_information",
-    "verify_current_affiliation",
-)
+        "extract_researcher_information",
+        "verify_current_affiliation",
+    )
     builder.add_edge(
         "verify_current_affiliation",
         "score_relevance",

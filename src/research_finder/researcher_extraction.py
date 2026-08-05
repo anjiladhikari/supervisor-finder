@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from langchain_core.language_models.chat_models import (
@@ -16,7 +17,7 @@ from research_finder.web_content import (
     DownloadedWebPage,
 )
 
-
+logger = logging.getLogger(__name__)
 class ResearcherExtractionDraft(StrictModel):
     """One researcher extracted by the LLM."""
 
@@ -43,10 +44,7 @@ class ResearcherExtractionDraft(StrictModel):
     evidence_text: str = Field(
         min_length=5,
         max_length=500,
-        description=(
-            "An exact continuous excerpt copied from "
-            "the supplied webpage."
-        ),
+        description=("An exact continuous excerpt copied from the supplied webpage."),
     )
 
     @field_validator(
@@ -114,9 +112,7 @@ class ResearcherExtractionDraft(StrictModel):
 class ResearcherExtractionBatch(StrictModel):
     """Researchers extracted from one webpage."""
 
-    researchers: list[
-        ResearcherExtractionDraft
-    ] = Field(
+    researchers: list[ResearcherExtractionDraft] = Field(
         default_factory=list,
         max_length=20,
     )
@@ -205,9 +201,7 @@ def build_researcher_extraction_messages(
 ) -> list[tuple[str, str]]:
     """Create structured researcher-extraction messages."""
 
-    content = document.content[
-        :max_content_characters
-    ]
+    content = document.content[:max_content_characters]
 
     user_prompt = f"""
 University: {document.university_name}
@@ -240,11 +234,7 @@ def extract_researchers_from_document(
         method="json_schema",
     )
 
-    raw_response = structured_model.invoke(
-        build_researcher_extraction_messages(
-            document
-        )
-    )
+    raw_response = structured_model.invoke(build_researcher_extraction_messages(document))
 
     if isinstance(
         raw_response,
@@ -252,23 +242,15 @@ def extract_researchers_from_document(
     ):
         batch = raw_response
     else:
-        batch = (
-            ResearcherExtractionBatch.model_validate(
-                raw_response
-            )
-        )
+        batch = ResearcherExtractionBatch.model_validate(raw_response)
 
-    normalised_content = _normalise_for_matching(
-        document.content
-    )
+    normalised_content = _normalise_for_matching(document.content)
 
     candidates: list[ResearcherCandidate] = []
     seen_names: set[str] = set()
 
     for researcher in batch.researchers:
-        evidence_key = _normalise_for_matching(
-            researcher.evidence_text
-        )
+        evidence_key = _normalise_for_matching(researcher.evidence_text)
 
         if evidence_key not in normalised_content:
             continue
@@ -283,27 +265,15 @@ def extract_researchers_from_document(
         candidates.append(
             ResearcherCandidate(
                 full_name=researcher.full_name,
-                academic_title=(
-                    researcher.academic_title
-                ),
+                academic_title=(researcher.academic_title),
                 role=researcher.role,
-                research_interests=(
-                    researcher.research_interests
-                ),
-                profile_summary=(
-                    researcher.profile_summary
-                ),
-                university_name=(
-                    document.university_name
-                ),
-                official_domain=(
-                    document.official_domain
-                ),
+                research_interests=(researcher.research_interests),
+                profile_summary=(researcher.profile_summary),
+                university_name=(document.university_name),
+                official_domain=(document.official_domain),
                 source_url=document.final_url,
                 source_title=document.page_title,
-                evidence_text=(
-                    researcher.evidence_text
-                ),
+                evidence_text=(researcher.evidence_text),
             )
         )
 
@@ -321,13 +291,12 @@ def extract_researcher_documents(
 
     for document in documents:
         try:
-            document_candidates = (
-                extract_researchers_from_document(
-                    document=document,
-                    model=model,
-                )
+            document_candidates = extract_researchers_from_document(
+                document=document,
+                model=model,
             )
         except Exception:
+            logger.exception("Researcher extraction failed for one document.")
             failed_documents += 1
             continue
 

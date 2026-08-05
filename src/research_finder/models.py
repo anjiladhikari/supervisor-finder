@@ -20,11 +20,13 @@ from pydantic import (
 
 class StrictModel(BaseModel):
     """Base configuration shared by application model."""
-    model_config=ConfigDict(
+
+    model_config = ConfigDict(
         extra="forbid",
         str_strip_whitespace=True,
         validate_assignment=True,
     )
+
 
 class AustralianState(StrEnum):
     """Australian states and territories supported by the MVP."""
@@ -39,11 +41,9 @@ class AustralianState(StrEnum):
     WESTERN_AUSTRALIA = "Western Australia"
 
 
-
-
-
 class SourceType(StrEnum):
     """Types of sources that may support a researcher result."""
+
     UNIVERSITY_PROFILE = "university_profile"
     UNIVERSITY_DIRECTORY = "university_directory"
     LAB_PAGE = "lab_page"
@@ -54,6 +54,7 @@ class SourceType(StrEnum):
 
 class VerificationStatus(StrEnum):
     """Overall verification level of a researcher result."""
+
     VERIFIED = "verified"
     PARTIALLY_VERIFIED = "partially_verified"
     UNVERIFIED = "unverified"
@@ -143,91 +144,66 @@ class SearchRequest(StrictModel):
     def validate_state_values(self) -> SearchRequest:
         """Require state name and code together."""
 
-        if (self.state is None) != (
-            self.state_code is None
-        ):
-            raise ValueError(
-                "state and state_code must both be "
-                "present or both be absent."
-            )
+        if (self.state is None) != (self.state_code is None):
+            raise ValueError("state and state_code must both be present or both be absent.")
 
-        if (
-            self.state_code is not None
-            and not self.state_code.startswith(
-                f"{self.country_code}-"
-            )
-        ):
-            raise ValueError(
-                "state_code must belong to country_code."
-            )
+        if self.state_code is not None and not self.state_code.startswith(f"{self.country_code}-"):
+            raise ValueError("state_code must belong to country_code.")
 
         return self
 
+
 class TopicExpansionDraft(StrictModel):
     """structured topic expansion produced by the LLM."""
-    canonical_topic: str=Field(
-    min_length=3,
-    max_length=300,
-    description=(
-            "A concise academic formulation of the original "
-            "research topic."
-        ),
+
+    canonical_topic: str = Field(
+        min_length=3,
+        max_length=300,
+        description=("A concise academic formulation of the original research topic."),
     )
 
     related_topics: list[str] = Field(
         max_length=8,
-        description=(
-            "Closely related research concepts that preserve "
-            "the user's intended scope."
-        ),
+        description=("Closely related research concepts that preserve the user's intended scope."),
     )
     broader_topics: list[str] = Field(
         max_length=4,
-        description=(
-            "Broader research fields that may contain relevant "
-            "research groups."
-        ),
+        description=("Broader research fields that may contain relevant research groups."),
     )
-
 
     narrower_topics: list[str] = Field(
         max_length=8,
-        description=(
-            "More specific research directions contained within "
-            "the original topic."
-        ),
+        description=("More specific research directions contained within the original topic."),
     )
     methods_and_techniques: list[str] = Field(
         max_length=8,
         description=(
-            "Methods, algorithms, architectures or technical "
-            "approaches associated with the topic."
+            "Methods, algorithms, architectures or technical approaches associated with the topic."
         ),
     )
     application_areas: list[str] = Field(
         max_length=6,
-        description=(
-            "Application areas in which the research topic may "
-            "be investigated."
-        ),
+        description=("Application areas in which the research topic may be investigated."),
     )
     search_keywords: list[str] = Field(
         max_length=15,
         description=(
-            "Short keywords and phrases suitable for official "
-            "university website searches."
+            "Short keywords and phrases suitable for official university website searches."
         ),
     )
 
-@field_validator("canonical_topic",mode="before")
+
+@field_validator("canonical_topic", mode="before")
 @classmethod
-def normalise_canonical_topic(cls,value:object,)-> object:
+def normalise_canonical_topic(
+    cls,
+    value: object,
+) -> object:
     """Normalise whitespace and trailing punctuation."""
-    if isinstance(value,str):
-        return (" ".join(value.split()).strip(" ,.;:"))
+    if isinstance(value, str):
+        return " ".join(value.split()).strip(" ,.;:")
 
     return value
-
 
     @field_validator(
         "related_topics",
@@ -255,10 +231,7 @@ def normalise_canonical_topic(cls,value:object,)-> object:
             if not isinstance(item, str):
                 continue
 
-            cleaned_item = (
-                " ".join(item.split())
-                .strip(" ,.;:")
-            )
+            cleaned_item = " ".join(item.split()).strip(" ,.;:")
 
             if not cleaned_item:
                 continue
@@ -302,9 +275,7 @@ class TopicExpansion(TopicExpansionDraft):
         """Create one ordered, duplicate-free search-term list."""
 
         if limit < 1:
-            raise ValueError(
-                "Search-term limit must be at least 1."
-            )
+            raise ValueError("Search-term limit must be at least 1.")
 
         ordered_terms = [
             self.original_topic,
@@ -333,6 +304,7 @@ class TopicExpansion(TopicExpansionDraft):
                 break
 
         return unique_terms
+
 
 class AustralianUniversity(StrictModel):
     """One verified university in the Australian directory."""
@@ -415,10 +387,7 @@ class AustralianUniversity(StrictModel):
         cleaned_domain = value.strip().casefold()
 
         if "://" in cleaned_domain or "/" in cleaned_domain:
-            raise ValueError(
-                "official_domain must be a domain without "
-                "a scheme or path."
-            )
+            raise ValueError("official_domain must be a domain without a scheme or path.")
 
         return cleaned_domain.removeprefix("www.")
 
@@ -438,32 +407,18 @@ class AustralianUniversity(StrictModel):
     ) -> AustralianUniversity:
         """Ensure the website belongs to the official domain."""
 
-        website_host = urlparse(
-            str(self.official_website)
-        ).hostname
+        website_host = urlparse(str(self.official_website)).hostname
 
         if website_host is None:
-            raise ValueError(
-                "official_website must contain a valid hostname."
-            )
+            raise ValueError("official_website must contain a valid hostname.")
 
-        normalised_host = (
-            website_host.casefold()
-            .removeprefix("www.")
-        )
+        normalised_host = website_host.casefold().removeprefix("www.")
 
-        is_root_domain = (
-            normalised_host == self.official_domain
-        )
-        is_subdomain = normalised_host.endswith(
-            f".{self.official_domain}"
-        )
+        is_root_domain = normalised_host == self.official_domain
+        is_subdomain = normalised_host.endswith(f".{self.official_domain}")
 
         if not is_root_domain and not is_subdomain:
-            raise ValueError(
-                "official_website must use official_domain "
-                "or one of its subdomains."
-            )
+            raise ValueError("official_website must use official_domain or one of its subdomains.")
 
         return self
 
@@ -478,7 +433,6 @@ class EvidenceSource(StrictModel):
     evidence_summary: str | None = Field(default=None, max_length=1000)
     is_official_university_source: bool
     verified_on: date = Field(default_factory=date.today)
-
 
 
 class ResearchProject(StrictModel):
@@ -527,7 +481,7 @@ class Publication(StrictModel):
     def validate_publication_year(cls, value: int | None) -> int | None:
         """Prevent clearly impossible future publication years."""
 
-        if value is not None and value > datetime.now(UTC).year+ 1:
+        if value is not None and value > datetime.now(UTC).year + 1:
             raise ValueError("Publication year cannot be far in the future.")
 
         return value
@@ -558,6 +512,7 @@ class RelevanceScore(StrictModel):
         )
 
         return round(score, 2)
+
 
 class ResearcherResult(StrictModel):
     """One verified or partially verified researcher result."""
@@ -591,15 +546,11 @@ class ResearcherResult(StrictModel):
         """Ensure projects are stored in their correct current/previous lists."""
 
         invalid_current_projects = [
-            project
-            for project in self.current_projects
-            if project.status != ProjectStatus.CURRENT
+            project for project in self.current_projects if project.status != ProjectStatus.CURRENT
         ]
 
         if invalid_current_projects:
-            raise ValueError(
-                "Every project in current_projects must have status='current'."
-            )
+            raise ValueError("Every project in current_projects must have status='current'.")
 
         invalid_previous_projects = [
             project
@@ -608,9 +559,7 @@ class ResearcherResult(StrictModel):
         ]
 
         if invalid_previous_projects:
-            raise ValueError(
-                "Every project in previous_projects must have status='previous'."
-            )
+            raise ValueError("Every project in previous_projects must have status='previous'.")
 
         return self
 
@@ -621,9 +570,7 @@ class SearchResponse(StrictModel):
     request: SearchRequest
     results: list[ResearcherResult] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
-    generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC)
-    )
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     @property
@@ -631,6 +578,7 @@ class SearchResponse(StrictModel):
         """Return the number of researcher results."""
 
         return len(self.results)
+
 
 # ResearcherResult
 # │

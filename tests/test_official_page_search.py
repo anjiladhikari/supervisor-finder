@@ -52,10 +52,7 @@ def create_query(
         official_domain="deakin.edu.au",
         target=target,
         topics=["Reinforcement learning"],
-        query=(
-            "site:deakin.edu.au "
-            f'"Reinforcement learning" {suffix}'
-        ),
+        query=(f'site:deakin.edu.au "Reinforcement learning" {suffix}'),
     )
 
 
@@ -77,13 +74,9 @@ def test_keeps_only_official_domain_results() -> None:
     client = FakeSearchClient(
         responses=[
             [
+                create_result("https://www.deakin.edu.au/research/profile"),
                 create_result(
-                    "https://www.deakin.edu.au/"
-                    "research/profile"
-                ),
-                create_result(
-                    "https://www.linkedin.com/"
-                    "in/example",
+                    "https://www.linkedin.com/in/example",
                     rank=2,
                 ),
             ]
@@ -102,9 +95,7 @@ def test_keeps_only_official_domain_results() -> None:
     )
 
     assert len(outcome.pages) == 1
-    assert outcome.pages[0].official_domain == (
-        "deakin.edu.au"
-    )
+    assert outcome.pages[0].official_domain == ("deakin.edu.au")
     assert outcome.attempted_queries == 1
     assert outcome.failed_queries == 0
 
@@ -113,13 +104,9 @@ def test_removes_duplicate_page_urls() -> None:
     client = FakeSearchClient(
         responses=[
             [
+                create_result("https://www.deakin.edu.au/research/profile"),
                 create_result(
-                    "https://www.deakin.edu.au/"
-                    "research/profile"
-                ),
-                create_result(
-                    "https://www.deakin.edu.au/"
-                    "research/profile/",
+                    "https://www.deakin.edu.au/research/profile/",
                     rank=2,
                 ),
             ]
@@ -144,12 +131,7 @@ def test_search_continues_after_query_failure() -> None:
     client = FakeSearchClient(
         responses=[
             WebSearchError("Temporary failure"),
-            [
-                create_result(
-                    "https://research.deakin.edu.au/"
-                    "project"
-                )
-            ],
+            [create_result("https://research.deakin.edu.au/project")],
         ]
     )
 
@@ -175,14 +157,7 @@ def test_search_continues_after_query_failure() -> None:
 
 def test_executes_only_requested_target() -> None:
     client = FakeSearchClient(
-        responses=[
-            [
-                create_result(
-                    "https://www.deakin.edu.au/"
-                    "research/profile"
-                )
-            ]
-        ]
+        responses=[[create_result("https://www.deakin.edu.au/research/profile")]]
     )
 
     outcome = execute_official_searches(
@@ -208,14 +183,7 @@ def test_researcher_node_stores_pages(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     client = FakeSearchClient(
-        responses=[
-            [
-                create_result(
-                    "https://www.deakin.edu.au/"
-                    "research/profile"
-                )
-            ]
-        ]
+        responses=[[create_result("https://www.deakin.edu.au/research/profile")]]
     )
 
     monkeypatch.setattr(
@@ -239,9 +207,5 @@ def test_researcher_node_stores_pages(
     assert len(result["researcher_pages"]) == 1
     assert result["search_attempt_count"] == 1
     assert result["execution_log"] == [
-        (
-            "Researcher search completed: "
-            "1 queries attempted, "
-            "1 official pages found."
-        )
+        ("Researcher search completed: 1 queries attempted, 1 official pages found.")
     ]

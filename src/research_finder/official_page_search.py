@@ -84,11 +84,7 @@ class OfficialSearchPage(StrictModel):
         """Normalise the official root domain."""
 
         if isinstance(value, str):
-            return (
-                value.strip()
-                .casefold()
-                .removeprefix("www.")
-            )
+            return value.strip().casefold().removeprefix("www.")
 
         return value
 
@@ -98,33 +94,18 @@ class OfficialSearchPage(StrictModel):
     ) -> OfficialSearchPage:
         """Require the result URL to use the official domain."""
 
-        hostname = urlparse(
-            str(self.url)
-        ).hostname
+        hostname = urlparse(str(self.url)).hostname
 
         if hostname is None:
-            raise ValueError(
-                "Search result URL must have a hostname."
-            )
+            raise ValueError("Search result URL must have a hostname.")
 
-        normalised_hostname = (
-            hostname.casefold()
-            .removeprefix("www.")
-        )
+        normalised_hostname = hostname.casefold().removeprefix("www.")
 
-        is_root_domain = (
-            normalised_hostname
-            == self.official_domain
-        )
-        is_subdomain = normalised_hostname.endswith(
-            f".{self.official_domain}"
-        )
+        is_root_domain = normalised_hostname == self.official_domain
+        is_subdomain = normalised_hostname.endswith(f".{self.official_domain}")
 
         if not is_root_domain and not is_subdomain:
-            raise ValueError(
-                "Search result must use the official "
-                "university domain."
-            )
+            raise ValueError("Search result must use the official university domain.")
 
         return self
 
@@ -147,9 +128,7 @@ def execute_official_searches(
     """Execute one target's official-domain queries."""
 
     target_queries = [
-        search_query
-        for search_query in search_queries
-        if search_query.target == target
+        search_query for search_query in search_queries if search_query.target == target
     ]
 
     pages: list[OfficialSearchPage] = []
@@ -171,12 +150,8 @@ def execute_official_searches(
         for result in results:
             try:
                 page = OfficialSearchPage(
-                    university_name=(
-                        search_query.university_name
-                    ),
-                    official_domain=(
-                        search_query.official_domain
-                    ),
+                    university_name=(search_query.university_name),
+                    official_domain=(search_query.official_domain),
                     target=search_query.target,
                     title=result.title,
                     url=result.url,
@@ -187,11 +162,7 @@ def execute_official_searches(
             except ValidationError:
                 continue
 
-            url_key = (
-                str(page.url)
-                .rstrip("/")
-                .casefold()
-            )
+            url_key = str(page.url).rstrip("/").casefold()
 
             if url_key in seen_urls:
                 continue

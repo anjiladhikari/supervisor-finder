@@ -9,6 +9,9 @@ from research_finder.models import SearchRequest, SearchResponse
 from research_finder.official_page_search import (
     execute_official_searches,
 )
+from research_finder.researcher_extraction import (
+    extract_researcher_documents,
+)
 from research_finder.search_queries import (
     SearchTarget,
     generate_official_search_queries,
@@ -31,9 +34,6 @@ from research_finder.web_search import (
     create_search_client,
 )
 
-from research_finder.researcher_extraction import (
-    extract_researcher_documents,
-)
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     """Create predictable initial values for the workflow."""
@@ -303,11 +303,9 @@ def _search_official_pages(
 
     if outcome.failed_queries:
         warnings.append(
-            
-                f"{label} search failed for "
-                f"{outcome.failed_queries} of "
-                f"{outcome.attempted_queries} queries."
-            
+            f"{label} search failed for "
+            f"{outcome.failed_queries} of "
+            f"{outcome.attempted_queries} queries."
         )
 
     if not outcome.pages:
@@ -374,6 +372,8 @@ def search_publications(
         state,
         SearchTarget.PUBLICATION,
     )
+
+
 def download_webpage_content(
     state: ResearchGraphState,
 ) -> dict[str, object]:
@@ -398,11 +398,7 @@ def download_webpage_content(
         ),
     )
 
-    all_pages = [
-        page
-        for page_key, _ in page_groups
-        for page in state.get(page_key, [])
-    ]
+    all_pages = [page for page_key, _ in page_groups for page in state.get(page_key, [])]
 
     if not all_pages:
         return {
@@ -416,18 +412,9 @@ def download_webpage_content(
                     0,
                 )
             ),
-            "warnings": [
-                (
-                    "No official pages were available "
-                    "for webpage download."
-                )
-            ],
+            "warnings": [("No official pages were available for webpage download.")],
             "execution_log": [
-                (
-                    "Webpage download completed: "
-                    "0 pages attempted, "
-                    "0 documents created."
-                )
+                ("Webpage download completed: 0 pages attempted, 0 documents created.")
             ],
         }
 
@@ -439,23 +426,17 @@ def download_webpage_content(
     document_count = 0
 
     for page_key, document_key in page_groups:
-        pages = list(
-            state.get(page_key, [])
-        )
+        pages = list(state.get(page_key, []))
 
         outcome = download_official_pages(
             pages=pages,
             downloader=downloader,
         )
 
-        result[document_key] = list(
-            outcome.documents
-        )
+        result[document_key] = list(outcome.documents)
         attempted_pages += outcome.attempted_pages
         failed_pages += outcome.failed_pages
-        document_count += len(
-            outcome.documents
-        )
+        document_count += len(outcome.documents)
 
     result["download_attempt_count"] = (
         state.get(
@@ -467,11 +448,7 @@ def download_webpage_content(
 
     if failed_pages:
         result["warnings"] = [
-            (
-                f"Webpage download failed for "
-                f"{failed_pages} of "
-                f"{attempted_pages} pages."
-            )
+            (f"Webpage download failed for {failed_pages} of {attempted_pages} pages.")
         ]
 
     result["execution_log"] = [
@@ -483,8 +460,6 @@ def download_webpage_content(
     ]
 
     return result
-
-
 
 
 def extract_researcher_information(
@@ -502,18 +477,9 @@ def extract_researcher_information(
     if not documents:
         return {
             "extracted_candidates": [],
-            "warnings": [
-                (
-                    "No researcher documents were "
-                    "available for structured extraction."
-                )
-            ],
+            "warnings": [("No researcher documents were available for structured extraction.")],
             "execution_log": [
-                (
-                    "Researcher extraction completed: "
-                    "0 documents processed, "
-                    "0 candidates created."
-                )
+                ("Researcher extraction completed: 0 documents processed, 0 candidates created.")
             ],
         }
 
@@ -525,9 +491,7 @@ def extract_researcher_information(
     )
 
     result: dict[str, object] = {
-        "extracted_candidates": list(
-            outcome.candidates
-        ),
+        "extracted_candidates": list(outcome.candidates),
         "execution_log": [
             (
                 "Researcher extraction completed: "
@@ -550,6 +514,7 @@ def extract_researcher_information(
         ]
 
     return result
+
 
 def verify_current_affiliation(
     _: ResearchGraphState,

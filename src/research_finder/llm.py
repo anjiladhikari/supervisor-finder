@@ -18,15 +18,11 @@ def create_chat_model(
 
     if active_settings.llm_provider == LLMProvider.GROQ:
         if active_settings.groq_api_key is None:
-            raise ValueError(
-                "A Groq API key is required to create ChatGroq."
-            )
+            raise ValueError("A Groq API key is required to create ChatGroq.")
 
         return ChatGroq(
             model=active_settings.groq_model,
-            api_key=(
-                active_settings.groq_api_key.get_secret_value()
-            ),
+            api_key=(active_settings.groq_api_key.get_secret_value()),
             temperature=active_settings.llm_temperature,
             max_tokens=active_settings.llm_max_output_tokens,
             timeout=active_settings.llm_timeout_seconds,
@@ -35,14 +31,9 @@ def create_chat_model(
 
     if active_settings.llm_provider == LLMProvider.OLLAMA:
         if active_settings.ollama_api_key is None:
-            raise ValueError(
-                "An Ollama API key is required to create "
-                "ChatOllama."
-            )
+            raise ValueError("An Ollama API key is required to create ChatOllama.")
 
-        api_key = (
-            active_settings.ollama_api_key.get_secret_value()
-        )
+        api_key = active_settings.ollama_api_key.get_secret_value()
 
         return ChatOllama(
             model=active_settings.ollama_model,
@@ -58,7 +49,4 @@ def create_chat_model(
             },
         )
 
-    raise ValueError(
-        f"Unsupported LLM provider: "
-        f"{active_settings.llm_provider}"
-    )
+    raise ValueError(f"Unsupported LLM provider: {active_settings.llm_provider}")

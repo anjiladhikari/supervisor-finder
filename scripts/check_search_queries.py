@@ -21,18 +21,12 @@ def main() -> None:
     queries = generate_official_search_queries(
         universities=universities,
         topics=[
-            (
-                "Reinforcement learning for "
-                "time-series data"
-            ),
+            ("Reinforcement learning for time-series data"),
             "Early time-series classification",
         ],
     )
 
-    target_counts = Counter(
-        query.target.value
-        for query in queries
-    )
+    target_counts = Counter(query.target.value for query in queries)
 
     print(f"Universities: {len(universities)}")
     print(f"Queries: {len(queries)}")
@@ -42,10 +36,7 @@ def main() -> None:
 
     for query in queries[:8]:
         print()
-        print(
-            f"{query.university_name} "
-            f"[{query.target.value}]"
-        )
+        print(f"{query.university_name} [{query.target.value}]")
         print(query.query)
 
 

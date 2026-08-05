@@ -56,21 +56,13 @@ def test_no_universities_route_to_final_output() -> None:
     assert destination == "generate_final_output"
 
 
-
-def test_generated_queries_route_to_researcher_search(
-) -> None:
+def test_generated_queries_route_to_researcher_search() -> None:
     state = {
-        "search_queries": [
-            "Example query"
-        ],
+        "search_queries": ["Example query"],
         "errors": [],
     }
 
-    destination = (
-        route_after_search_query_generation(
-            state
-        )
-    )
+    destination = route_after_search_query_generation(state)
 
     assert destination == "search_researchers"
 
@@ -81,10 +73,6 @@ def test_missing_queries_route_to_final_output() -> None:
         "errors": [],
     }
 
-    destination = (
-        route_after_search_query_generation(
-            state
-        )
-    )
+    destination = route_after_search_query_generation(state)
 
     assert destination == "generate_final_output"
