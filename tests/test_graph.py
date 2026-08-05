@@ -140,6 +140,11 @@ def test_graph_returns_valid_empty_response(
             "0 official pages found."
         ),
         (
+            "Webpage download completed: "
+            "0 pages attempted, "
+            "0 documents created."
+        ),
+        (
             "Affiliation-verification placeholder "
             "completed."
         ),
