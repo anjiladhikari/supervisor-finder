@@ -10,8 +10,8 @@ from research_finder.search_queries import (
 )
 from research_finder.web_content import (
     DownloadedWebPage,
-    WebPageDownloadError,
     WebPageDownloader,
+    WebPageDownloadError,
     clean_html_content,
     download_official_pages,
 )

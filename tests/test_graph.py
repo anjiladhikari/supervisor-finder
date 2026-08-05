@@ -14,10 +14,7 @@ class FakeGraphStructuredModel:
 
     def invoke(self, _: object) -> TopicExpansionDraft:
         return TopicExpansionDraft(
-            canonical_topic=(
-                "Reinforcement learning for "
-                "time-series analysis"
-            ),
+            canonical_topic=("Reinforcement learning for time-series analysis"),
             related_topics=[
                 "Deep reinforcement learning",
             ],
@@ -82,10 +79,7 @@ def test_graph_returns_valid_empty_response(
             "raw_request": {
                 "country": " australia ",
                 "state": "vic",
-                "research_topic": (
-                    "Reinforcement learning "
-                    "for time-series data"
-                ),
+                "research_topic": ("Reinforcement learning for time-series data"),
             }
         }
     )
@@ -102,52 +96,21 @@ def test_graph_returns_valid_empty_response(
     assert response.result_count == 0
 
     assert any(
-        "No official researcher pages were found"
-        in warning
-        for warning in response.warnings
+        "No official researcher pages were found" in warning for warning in response.warnings
     )
 
     assert output["execution_log"] == [
         "Workflow initialized.",
         "Input validation completed.",
         "Structured topic expansion completed.",
-        (
-            "University directory selected "
-            "12 candidates for Victoria, Australia."
-        ),
-        (
-            "Generated 48 official "
-            "university-domain queries."
-        ),
-        (
-            "Researcher search completed: "
-            "12 queries attempted, "
-            "0 official pages found."
-        ),
-        (
-            "Research-lab search completed: "
-            "12 queries attempted, "
-            "0 official pages found."
-        ),
-        (
-            "Research-project search completed: "
-            "12 queries attempted, "
-            "0 official pages found."
-        ),
-        (
-            "Publication search completed: "
-            "12 queries attempted, "
-            "0 official pages found."
-        ),
-        (
-            "Webpage download completed: "
-            "0 pages attempted, "
-            "0 documents created."
-        ),
-        (
-            "Affiliation-verification placeholder "
-            "completed."
-        ),
+        ("University directory selected 12 candidates for Victoria, Australia."),
+        ("Generated 48 official university-domain queries."),
+        ("Researcher search completed: 12 queries attempted, 0 official pages found."),
+        ("Research-lab search completed: 12 queries attempted, 0 official pages found."),
+        ("Research-project search completed: 12 queries attempted, 0 official pages found."),
+        ("Publication search completed: 12 queries attempted, 0 official pages found."),
+        ("Webpage download completed: 0 pages attempted, 0 documents created."),
+        ("Affiliation-verification placeholder completed."),
         "Relevance-scoring placeholder completed.",
         "Duplicate removal completed.",
         "Result ranking completed.",
@@ -161,9 +124,7 @@ def test_graph_stops_after_invalid_input() -> None:
             "raw_request": {
                 "country": "Canada",
                 "state": "Ontario",
-                "research_topic": (
-                    "Reinforcement learning"
-                ),
+                "research_topic": ("Reinforcement learning"),
             }
         }
     )
@@ -171,16 +132,10 @@ def test_graph_stops_after_invalid_input() -> None:
     assert output["final_response"] is None
     assert output["warnings"] == []
 
-    assert any(
-        error.startswith("country:")
-        for error in output["errors"]
-    )
+    assert any(error.startswith("country:") for error in output["errors"])
 
     assert output["execution_log"] == [
         "Workflow initialized.",
         "Input validation failed.",
-        (
-            "Final response could not be generated because "
-            "the request was invalid."
-        ),
+        ("Final response could not be generated because the request was invalid."),
     ]
