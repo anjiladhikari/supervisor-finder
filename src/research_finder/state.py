@@ -1,10 +1,6 @@
 from operator import add
 from typing import Annotated, TypedDict
 
-from research_finder.web_content import (
-    DownloadedWebPage,
-)
-
 from research_finder.models import (
     ResearcherResult,
     SearchRequest,
@@ -18,8 +14,13 @@ from research_finder.search_queries import (
     OfficialSearchQuery,
 )
 from research_finder.university_directory import UniversityRecord
+from research_finder.web_content import (
+    DownloadedWebPage,
+)
 
-
+from research_finder.researcher_extraction import (
+    ResearcherCandidate,
+)
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
 
@@ -62,7 +63,7 @@ class ResearchGraphState(WorkflowMessages, total=False):
     project_documents: list[DownloadedWebPage]
     publication_documents: list[DownloadedWebPage]
 
-    extracted_candidates: list[dict[str, object]]
+    extracted_candidates: list[ResearcherCandidate]
 
     verified_results: list[ResearcherResult]
     scored_results: list[ResearcherResult]
