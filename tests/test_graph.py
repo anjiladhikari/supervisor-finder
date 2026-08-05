@@ -3,10 +3,14 @@ import pytest
 from research_finder import nodes as nodes_module
 from research_finder.graph import graph
 from research_finder.models import TopicExpansionDraft
+from research_finder.web_search import (
+    WebSearchRequest,
+    WebSearchResult,
+)
 
 
 class FakeGraphStructuredModel:
-    """Return one controlled graph topic expansion."""
+    """Return one controlled topic expansion."""
 
     def invoke(self, _: object) -> TopicExpansionDraft:
         return TopicExpansionDraft(
@@ -36,7 +40,7 @@ class FakeGraphStructuredModel:
 
 
 class FakeGraphChatModel:
-    """Provide structured output without a real API."""
+    """Provide topic expansion without a real LLM API."""
 
     def with_structured_output(
         self,
@@ -46,13 +50,31 @@ class FakeGraphChatModel:
         return FakeGraphStructuredModel()
 
 
+class FakeGraphSearchClient:
+    """Return no pages without performing real web searches."""
+
+    def search(
+        self,
+        _: WebSearchRequest,
+    ) -> list[WebSearchResult]:
+        return []
+
+
 def test_graph_returns_valid_empty_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Prevent a real Groq/Ollama request.
     monkeypatch.setattr(
         nodes_module,
         "create_chat_model",
         lambda: FakeGraphChatModel(),
+    )
+
+    # Prevent real DDGS web searches.
+    monkeypatch.setattr(
+        nodes_module,
+        "create_search_client",
+        lambda: FakeGraphSearchClient(),
     )
 
     output = graph.invoke(
@@ -80,7 +102,7 @@ def test_graph_returns_valid_empty_response(
     assert response.result_count == 0
 
     assert any(
-        "Researcher search is not implemented"
+        "No official researcher pages were found"
         in warning
         for warning in response.warnings
     )
@@ -97,10 +119,26 @@ def test_graph_returns_valid_empty_response(
             "Generated 48 official "
             "university-domain queries."
         ),
-        "Researcher-search placeholder completed.",
-        "Research-lab search placeholder completed.",
-        "Research-project search placeholder completed.",
-        "Publication-search placeholder completed.",
+        (
+            "Researcher search completed: "
+            "12 queries attempted, "
+            "0 official pages found."
+        ),
+        (
+            "Research-lab search completed: "
+            "12 queries attempted, "
+            "0 official pages found."
+        ),
+        (
+            "Research-project search completed: "
+            "12 queries attempted, "
+            "0 official pages found."
+        ),
+        (
+            "Publication search completed: "
+            "12 queries attempted, "
+            "0 official pages found."
+        ),
         (
             "Affiliation-verification placeholder "
             "completed."
