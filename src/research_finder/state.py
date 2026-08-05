@@ -1,6 +1,10 @@
 from operator import add
 from typing import Annotated, TypedDict
 
+from research_finder.web_content import (
+    DownloadedWebPage,
+)
+
 from research_finder.models import (
     ResearcherResult,
     SearchRequest,
@@ -53,6 +57,10 @@ class ResearchGraphState(WorkflowMessages, total=False):
     project_pages: list[OfficialSearchPage]
     publication_pages: list[OfficialSearchPage]
 
+    researcher_documents: list[DownloadedWebPage]
+    lab_documents: list[DownloadedWebPage]
+    project_documents: list[DownloadedWebPage]
+    publication_documents: list[DownloadedWebPage]
 
     extracted_candidates: list[dict[str, object]]
 
@@ -62,4 +70,5 @@ class ResearchGraphState(WorkflowMessages, total=False):
     ranked_results: list[ResearcherResult]
 
     search_attempt_count: int
+    download_attempt_count: int
     final_response: SearchResponse | None
