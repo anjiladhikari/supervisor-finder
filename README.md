@@ -119,17 +119,13 @@ The current graph safely stops when input is invalid or when no universities
 are found. It returns warnings instead of generating unsupported researcher
 information.
 
-- [x] Free web-search dependency
-- [x] Search configuration
-- [x] Search request model
-- [x] Search result model
-- [x] DDGS search client
-- [x] Search timeout
-- [x] Bounded retry behaviour
-- [x] Search result limits
-- [x] URL validation
-- [x] Duplicate-result removal
-- [x] Web-search unit tests
-- [x] Manual web-search check
-- [ ] Official university-domain query generation
-- [ ] Researcher and lab page search
+- [x] Official researcher-page search
+- [x] Official lab-page search
+- [x] Official project-page search
+- [x] Official publication-page search
+- [x] Official-domain result validation
+- [x] Duplicate page removal
+- [x] Partial search-failure handling
+- [x] Search-page unit tests
+- [ ] Download and clean webpage content
+- [ ] Extract structured researcher information
