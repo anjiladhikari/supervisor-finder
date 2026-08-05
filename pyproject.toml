@@ -17,6 +17,9 @@ dependencies = [
     "pydantic-settings",
     "pycountry",
     "ddgs",
+    "httpx",
+    "beautifulsoup4",
+    
 ]
 
 [project.optional-dependencies]
