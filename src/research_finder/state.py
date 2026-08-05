@@ -11,7 +11,9 @@ from research_finder.search_queries import (
     OfficialSearchQuery,
 )
 from research_finder.university_directory import UniversityRecord
-
+from research_finder.official_page_search import (
+    OfficialSearchPage,
+)
 
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
@@ -43,12 +45,13 @@ class ResearchGraphState(WorkflowMessages, total=False):
     expanded_topics: list[str]
 
     candidate_universities: list[UniversityRecord]
-    search_queries: list[OfficialSearchQuery]
 
-    researcher_pages: list[str]
-    lab_pages: list[str]
-    project_pages: list[str]
-    publication_pages: list[str]
+    search_queries: list[OfficialSearchQuery]
+    researcher_pages: list[OfficialSearchPage]
+    lab_pages: list[OfficialSearchPage]
+    project_pages: list[OfficialSearchPage]
+    publication_pages: list[OfficialSearchPage]
+
 
     extracted_candidates: list[dict[str, object]]
 
