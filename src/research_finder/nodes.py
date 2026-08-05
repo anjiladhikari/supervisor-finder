@@ -26,7 +26,10 @@ from research_finder.university_directory import (
 from research_finder.web_search import (
     create_search_client,
 )
-
+from research_finder.web_content import (
+    create_page_downloader,
+    download_official_pages,
+)
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     """Create predictable initial values for the workflow."""
@@ -41,6 +44,10 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
         "lab_pages": [],
         "project_pages": [],
         "publication_pages": [],
+        "researcher_documents": [],
+        "lab_documents": [],
+        "project_documents": [],
+        "publication_documents": [],
         "extracted_candidates": [],
         "verified_results": [],
         "scored_results": [],
@@ -363,7 +370,115 @@ def search_publications(
         state,
         SearchTarget.PUBLICATION,
     )
+def download_webpage_content(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Download and clean all discovered official pages."""
 
+    page_groups = (
+        (
+            "researcher_pages",
+            "researcher_documents",
+        ),
+        (
+            "lab_pages",
+            "lab_documents",
+        ),
+        (
+            "project_pages",
+            "project_documents",
+        ),
+        (
+            "publication_pages",
+            "publication_documents",
+        ),
+    )
+
+    all_pages = [
+        page
+        for page_key, _ in page_groups
+        for page in state.get(page_key, [])
+    ]
+
+    if not all_pages:
+        return {
+            "researcher_documents": [],
+            "lab_documents": [],
+            "project_documents": [],
+            "publication_documents": [],
+            "download_attempt_count": (
+                state.get(
+                    "download_attempt_count",
+                    0,
+                )
+            ),
+            "warnings": [
+                (
+                    "No official pages were available "
+                    "for webpage download."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Webpage download completed: "
+                    "0 pages attempted, "
+                    "0 documents created."
+                )
+            ],
+        }
+
+    downloader = create_page_downloader()
+
+    result: dict[str, object] = {}
+    attempted_pages = 0
+    failed_pages = 0
+    document_count = 0
+
+    for page_key, document_key in page_groups:
+        pages = list(
+            state.get(page_key, [])
+        )
+
+        outcome = download_official_pages(
+            pages=pages,
+            downloader=downloader,
+        )
+
+        result[document_key] = list(
+            outcome.documents
+        )
+        attempted_pages += outcome.attempted_pages
+        failed_pages += outcome.failed_pages
+        document_count += len(
+            outcome.documents
+        )
+
+    result["download_attempt_count"] = (
+        state.get(
+            "download_attempt_count",
+            0,
+        )
+        + attempted_pages
+    )
+
+    if failed_pages:
+        result["warnings"] = [
+            (
+                f"Webpage download failed for "
+                f"{failed_pages} of "
+                f"{attempted_pages} pages."
+            )
+        ]
+
+    result["execution_log"] = [
+        (
+            "Webpage download completed: "
+            f"{attempted_pages} pages attempted, "
+            f"{document_count} documents created."
+        )
+    ]
+
+    return result
 
 def verify_current_affiliation(
     _: ResearchGraphState,
