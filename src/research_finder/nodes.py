@@ -13,6 +13,9 @@ from research_finder.models import SearchRequest, SearchResponse
 from research_finder.official_page_search import (
     execute_official_searches,
 )
+from research_finder.ranking import (
+    rank_researcher_results,
+)
 from research_finder.relevance import (
     score_researcher_profiles,
 )
@@ -944,21 +947,91 @@ def score_relevance(
 def rank_results(
     state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Rank results from highest to lowest relevance score."""
+    """Rank deduplicated researchers."""
 
-    deduplicated_results = state.get("deduplicated_results", [])
-
-    ranked_results = sorted(
-        deduplicated_results,
-        key=lambda result: result.relevance_score.total,
-        reverse=True,
+    results = list(
+        state.get(
+            "deduplicated_results",
+            [],
+        )
     )
 
-    return {
+    if not results:
+        return {
+            "ranked_results": [],
+            "warnings": [
+                (
+                    "No deduplicated researchers "
+                    "were available for ranking."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Result ranking completed: "
+                    "0 researchers ranked."
+                )
+            ],
+        }
+
+    request = state.get("request")
+
+    if request is None:
+        return {
+            "ranked_results": [],
+            "errors": [
+                (
+                    "Result ranking requires "
+                    "a validated search request."
+                )
+            ],
+            "execution_log": [
+                "Result ranking failed."
+            ],
+        }
+
+    ranked_results = (
+        rank_researcher_results(
+            results,
+            max_results=(
+                request.max_results
+            ),
+        )
+    )
+
+    excluded_results = (
+        len(results)
+        - len(
+            [
+                result
+                for result in results
+                if result.relevance_score > 0
+            ]
+        )
+    )
+
+    response: dict[str, object] = {
         "ranked_results": ranked_results,
-        "execution_log": ["Result ranking completed."],
+        "execution_log": [
+            (
+                "Result ranking completed: "
+                f"{len(results)} unique researchers "
+                f"evaluated, "
+                f"{len(ranked_results)} strongest "
+                "matches retained."
+            )
+        ],
     }
 
+    if excluded_results:
+        response["warnings"] = [
+            (
+                f"{excluded_results} researchers "
+                "were excluded because their "
+                "relevance score was 0."
+            )
+        ]
+
+    return response
 
 def generate_final_output(
     state: ResearchGraphState,
