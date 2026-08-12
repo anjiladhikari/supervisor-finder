@@ -153,6 +153,31 @@ This step does not perform additional web searches or LLM calls.
 
 ---
 
+## Research profile organisation
+
+Verified researcher information is separated into:
+
+- General research interests
+- Current projects
+- Previous projects
+- Projects with unknown status
+
+Project status is determined only from explicit evidence in official
+university content.
+
+Current-status phrases such as "currently", "ongoing" and "is leading" are
+treated as current evidence.
+
+Previous-status phrases such as "previously", "completed" and "concluded"
+are treated as previous evidence.
+
+Explicit project year ranges may also be used.
+
+When the evidence does not clearly establish project status, the project is
+stored as unknown rather than guessed.
+
+---
+
 ## Key modules
 
 | Module | Purpose |
@@ -169,6 +194,7 @@ This step does not perform additional web searches or LLM calls.
 | `researcher_extraction.py` | LLM-based structured extraction of researcher candidates from pages |
 | `researcher_details.py` | LLM-based extraction of emails, labs, projects and publications; candidate enrichment |
 | `verification.py` | Deterministic verification of candidates against downloaded evidence |
+| `research_profile.py` | Deterministic project status classification and researcher profile organisation |
 | `nodes.py` | LangGraph node functions |
 | `routes.py` | Conditional routing functions |
 | `graph.py` | LangGraph graph assembly and compilation |
