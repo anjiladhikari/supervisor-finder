@@ -942,8 +942,6 @@ def score_relevance(
     }
 
 
-
-
 def rank_results(
     state: ResearchGraphState,
 ) -> dict[str, object]:
@@ -959,18 +957,8 @@ def rank_results(
     if not results:
         return {
             "ranked_results": [],
-            "warnings": [
-                (
-                    "No deduplicated researchers "
-                    "were available for ranking."
-                )
-            ],
-            "execution_log": [
-                (
-                    "Result ranking completed: "
-                    "0 researchers ranked."
-                )
-            ],
+            "warnings": [("No deduplicated researchers were available for ranking.")],
+            "execution_log": [("Result ranking completed: 0 researchers ranked.")],
         }
 
     request = state.get("request")
@@ -978,35 +966,17 @@ def rank_results(
     if request is None:
         return {
             "ranked_results": [],
-            "errors": [
-                (
-                    "Result ranking requires "
-                    "a validated search request."
-                )
-            ],
-            "execution_log": [
-                "Result ranking failed."
-            ],
+            "errors": [("Result ranking requires a validated search request.")],
+            "execution_log": ["Result ranking failed."],
         }
 
-    ranked_results = (
-        rank_researcher_results(
-            results,
-            max_results=(
-                request.max_results
-            ),
-        )
+    ranked_results = rank_researcher_results(
+        results,
+        max_results=(request.max_results),
     )
 
-    excluded_results = (
-        len(results)
-        - len(
-            [
-                result
-                for result in results
-                if result.relevance_score > 0
-            ]
-        )
+    excluded_results = len(results) - len(
+        [result for result in results if result.relevance_score > 0]
     )
 
     response: dict[str, object] = {
@@ -1024,14 +994,11 @@ def rank_results(
 
     if excluded_results:
         response["warnings"] = [
-            (
-                f"{excluded_results} researchers "
-                "were excluded because their "
-                "relevance score was 0."
-            )
+            (f"{excluded_results} researchers were excluded because their relevance score was 0.")
         ]
 
     return response
+
 
 def generate_final_output(
     state: ResearchGraphState,
