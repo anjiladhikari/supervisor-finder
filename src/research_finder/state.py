@@ -27,6 +27,10 @@ from research_finder.web_content import (
     DownloadedWebPage,
 )
 
+from research_finder.research_profile import (
+    OrganisedResearcherProfile,
+)
+
 
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
@@ -75,6 +79,8 @@ class ResearchGraphState(WorkflowMessages, total=False):
     enriched_candidates: list[EnrichedResearcherCandidate]
 
     verified_results: list[VerifiedResearcherCandidate]
+    organised_results: list[OrganisedResearcherProfile]
+
     scored_results: list[ResearcherResult]
     deduplicated_results: list[ResearcherResult]
     ranked_results: list[ResearcherResult]
