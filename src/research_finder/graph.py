@@ -1,4 +1,3 @@
-from bs4 import builder
 from langgraph.graph import END, START, StateGraph
 
 from research_finder.nodes import (
@@ -10,6 +9,7 @@ from research_finder.nodes import (
     generate_final_output,
     generate_search_queries,
     initialize_workflow,
+    organise_researcher_profiles,
     rank_results,
     remove_duplicates,
     score_relevance,
@@ -19,7 +19,6 @@ from research_finder.nodes import (
     search_researchers,
     validate_input,
     verify_current_affiliation,
-    organise_researcher_profiles,
 )
 from research_finder.routes import (
     route_after_search_query_generation,

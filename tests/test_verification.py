@@ -16,7 +16,6 @@ from research_finder.web_content import (
     DownloadedWebPage,
 )
 
-
 PROFILE_URL = (
     "https://www.deakin.edu.au/"
     "profile/jane-smith"

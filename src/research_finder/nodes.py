@@ -9,6 +9,9 @@ from research_finder.models import SearchRequest, SearchResponse
 from research_finder.official_page_search import (
     execute_official_searches,
 )
+from research_finder.research_profile import (
+    organise_verified_researchers,
+)
 from research_finder.researcher_details import (
     enrich_researcher_candidates,
     extract_researcher_detail_documents,
@@ -37,12 +40,10 @@ from research_finder.web_content import (
     create_page_downloader,
     download_official_pages,
 )
-from research_finder.research_profile import (
-    organise_verified_researchers,
-)
 from research_finder.web_search import (
     create_search_client,
 )
+
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     """Create predictable initial values for the workflow."""
@@ -643,18 +644,9 @@ def verify_current_affiliation(
     if not candidates:
         return {
             "verified_results": [],
-            "warnings": [
-                (
-                    "No enriched researchers were "
-                    "available for verification."
-                )
-            ],
+            "warnings": [("No enriched researchers were available for verification.")],
             "execution_log": [
-                (
-                    "Researcher verification completed: "
-                    "0 candidates checked, "
-                    "0 verified."
-                )
+                ("Researcher verification completed: 0 candidates checked, 0 verified.")
             ],
         }
 
@@ -683,9 +675,7 @@ def verify_current_affiliation(
     )
 
     result: dict[str, object] = {
-        "verified_results": list(
-            outcome.verified_candidates
-        ),
+        "verified_results": list(outcome.verified_candidates),
         "execution_log": [
             (
                 "Researcher verification completed: "
@@ -701,27 +691,20 @@ def verify_current_affiliation(
 
     if outcome.rejected_candidates:
         warnings.append(
-            
-                f"{outcome.rejected_candidates} "
-                "researcher candidates were rejected "
-                "because current official affiliation "
-                "could not be verified."
-            
+            f"{outcome.rejected_candidates} "
+            "researcher candidates were rejected "
+            "because current official affiliation "
+            "could not be verified."
         )
 
     if outcome.discarded_claims:
-        warnings.append(
-            
-                f"{outcome.discarded_claims} "
-                "unsupported researcher claims "
-                "were discarded."
-            
-        )
+        warnings.append(f"{outcome.discarded_claims} unsupported researcher claims were discarded.")
 
     if warnings:
         result["warnings"] = warnings
 
     return result
+
 
 def organise_researcher_profiles(
     state: ResearchGraphState,
@@ -738,40 +721,19 @@ def organise_researcher_profiles(
     if not verified_results:
         return {
             "organised_results": [],
-            "warnings": [
-                (
-                    "No verified researchers were "
-                    "available for profile organisation."
-                )
-            ],
+            "warnings": [("No verified researchers were available for profile organisation.")],
             "execution_log": [
-                (
-                    "Researcher profile organisation "
-                    "completed: 0 researchers organised."
-                )
+                ("Researcher profile organisation completed: 0 researchers organised.")
             ],
         }
 
-    organised_results = (
-        organise_verified_researchers(
-            verified_results
-        )
-    )
+    organised_results = organise_verified_researchers(verified_results)
 
-    current_projects = sum(
-        len(result.current_projects)
-        for result in organised_results
-    )
+    current_projects = sum(len(result.current_projects) for result in organised_results)
 
-    previous_projects = sum(
-        len(result.previous_projects)
-        for result in organised_results
-    )
+    previous_projects = sum(len(result.previous_projects) for result in organised_results)
 
-    unknown_projects = sum(
-        len(result.unknown_projects)
-        for result in organised_results
-    )
+    unknown_projects = sum(len(result.unknown_projects) for result in organised_results)
 
     return {
         "organised_results": organised_results,
@@ -787,6 +749,7 @@ def organise_researcher_profiles(
             )
         ],
     }
+
 
 def score_relevance(
     state: ResearchGraphState,
