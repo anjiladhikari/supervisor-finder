@@ -758,7 +758,7 @@ def organise_researcher_profiles(
     }
 
 
-def deduplicate_results(
+def remove_duplicates(
     state: ResearchGraphState,
 ) -> dict[str, object]:
     """Deduplicate researchers and source pages."""
@@ -939,32 +939,6 @@ def score_relevance(
     }
 
 
-def remove_duplicates(
-    state: ResearchGraphState,
-) -> dict[str, object]:
-    """Keep one result for each researcher-university combination."""
-
-    scored_results = state.get("scored_results", [])
-    unique_results = {}
-
-    for result in scored_results:
-        key = (
-            result.researcher_name.casefold(),
-            result.university_name.casefold(),
-        )
-
-        existing_result = unique_results.get(key)
-
-        if (
-            existing_result is None
-            or result.relevance_score.total > existing_result.relevance_score.total
-        ):
-            unique_results[key] = result
-
-    return {
-        "deduplicated_results": list(unique_results.values()),
-        "execution_log": ["Duplicate removal completed."],
-    }
 
 
 def rank_results(

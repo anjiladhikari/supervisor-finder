@@ -202,7 +202,7 @@ def test_merged_researcher_is_rescored() -> None:
 
 
 def test_node_handles_no_results() -> None:
-    result = nodes_module.deduplicate_results(
+    result = nodes_module.remove_duplicates(
         {
             "scored_results": [],
             "researcher_pages": [],
@@ -242,7 +242,7 @@ def test_node_merges_duplicate_results() -> None:
 
     second = create_scored_result(projects=[create_project()])
 
-    result = nodes_module.deduplicate_results(
+    result = nodes_module.remove_duplicates(
         {
             "request": request,
             "expanded_topics": [],
