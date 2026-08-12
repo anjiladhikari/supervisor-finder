@@ -25,6 +25,7 @@ def create_chat_model(
             api_key=(active_settings.groq_api_key.get_secret_value()),
             temperature=active_settings.llm_temperature,
             max_tokens=active_settings.llm_max_output_tokens,
+            reasoning_effort="low",
             timeout=active_settings.llm_timeout_seconds,
             max_retries=active_settings.llm_max_retries,
         )
