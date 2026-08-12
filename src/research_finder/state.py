@@ -34,6 +34,7 @@ from research_finder.web_content import (
 )
 
 
+
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
 
