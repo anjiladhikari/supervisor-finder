@@ -18,6 +18,7 @@ from research_finder.web_content import (
 
 logger = logging.getLogger(__name__)
 
+
 class ResearcherExtractionDraft(StrictModel):
     """One researcher extracted by the LLM."""
 
@@ -40,18 +41,14 @@ class ResearcherExtractionDraft(StrictModel):
     evidence_text: str = Field(
         min_length=5,
         max_length=500,
-        description=(
-            "An exact continuous excerpt copied from "
-            "the supplied webpage."
-        ),
+        description=("An exact continuous excerpt copied from the supplied webpage."),
     )
+
 
 class ResearcherExtractionBatch(StrictModel):
     """Researchers extracted from one webpage."""
 
-    researchers: list[
-        ResearcherExtractionDraft
-    ] = Field(
+    researchers: list[ResearcherExtractionDraft] = Field(
         max_length=20,
     )
 
