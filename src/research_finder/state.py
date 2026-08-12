@@ -24,6 +24,7 @@ from research_finder.researcher_details import (
     EnrichedResearcherCandidate,
 )
 
+
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
 

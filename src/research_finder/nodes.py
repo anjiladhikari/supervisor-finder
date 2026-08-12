@@ -34,6 +34,11 @@ from research_finder.web_search import (
     create_search_client,
 )
 
+from research_finder.researcher_details import (
+    enrich_researcher_candidates,
+    extract_researcher_detail_documents,
+)
+
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     """Create predictable initial values for the workflow."""
@@ -53,6 +58,7 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
         "project_documents": [],
         "publication_documents": [],
         "extracted_candidates": [],
+        "enriched_candidates": [],
         "verified_results": [],
         "scored_results": [],
         "deduplicated_results": [],
@@ -515,6 +521,120 @@ def extract_researcher_information(
 
     return result
 
+
+def extract_researcher_details(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Extract labs, projects, publications and emails."""
+
+    candidates = list(
+        state.get(
+            "extracted_candidates",
+            [],
+        )
+    )
+
+    if not candidates:
+        return {
+            "enriched_candidates": [],
+            "warnings": [
+                (
+                    "No researcher candidates were "
+                    "available for detail extraction."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Researcher detail extraction completed: "
+                    "0 documents processed, "
+                    "0 researchers enriched."
+                )
+            ],
+        }
+
+    documents = [
+        *state.get(
+            "researcher_documents",
+            [],
+        ),
+        *state.get(
+            "lab_documents",
+            [],
+        ),
+        *state.get(
+            "project_documents",
+            [],
+        ),
+        *state.get(
+            "publication_documents",
+            [],
+        ),
+    ]
+
+    if not documents:
+        enriched = enrich_researcher_candidates(
+            candidates=candidates,
+            associations=[],
+        )
+
+        return {
+            "enriched_candidates": enriched,
+            "warnings": [
+                (
+                    "No supporting documents were "
+                    "available for researcher details."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Researcher detail extraction completed: "
+                    "0 documents processed, "
+                    f"{len(enriched)} researchers enriched."
+                )
+            ],
+        }
+
+    model = create_chat_model()
+
+    outcome = (
+        extract_researcher_detail_documents(
+            documents=documents,
+            candidates=candidates,
+            model=model,
+        )
+    )
+
+    enriched = enrich_researcher_candidates(
+        candidates=candidates,
+        associations=list(
+            outcome.associations
+        ),
+    )
+
+    result: dict[str, object] = {
+        "enriched_candidates": enriched,
+        "execution_log": [
+            (
+                "Researcher detail extraction completed: "
+                f"{outcome.attempted_documents} "
+                "documents processed, "
+                f"{len(enriched)} "
+                "researchers enriched."
+            )
+        ],
+    }
+
+    if outcome.failed_documents:
+        result["warnings"] = [
+            (
+                "Researcher detail extraction failed "
+                f"for {outcome.failed_documents} of "
+                f"{outcome.attempted_documents} "
+                "documents."
+            )
+        ]
+
+    return result
 
 def verify_current_affiliation(
     _: ResearchGraphState,
