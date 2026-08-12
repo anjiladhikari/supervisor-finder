@@ -115,7 +115,13 @@ def test_graph_returns_valid_empty_response(
         ("Researcher verification completed: 0 candidates checked, 0 verified."),
         ("Researcher profile organisation completed: 0 researchers organised."),
         ("Relevance scoring completed: 0 researchers scored."),
-        "Duplicate removal completed.",
+        (
+        "Deduplication completed: "
+        "0 scored researchers -> "
+        "0 unique researchers; "
+        "0 duplicate source pages and "
+        "0 duplicate documents removed."
+    ),
         "Result ranking completed.",
         "Final response generated.",
     ]
