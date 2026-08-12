@@ -9,6 +9,10 @@ from research_finder.models import SearchRequest, SearchResponse
 from research_finder.official_page_search import (
     execute_official_searches,
 )
+from research_finder.researcher_details import (
+    enrich_researcher_candidates,
+    extract_researcher_detail_documents,
+)
 from research_finder.researcher_extraction import (
     extract_researcher_documents,
 )
@@ -32,11 +36,6 @@ from research_finder.web_content import (
 )
 from research_finder.web_search import (
     create_search_client,
-)
-
-from research_finder.researcher_details import (
-    enrich_researcher_candidates,
-    extract_researcher_detail_documents,
 )
 
 
