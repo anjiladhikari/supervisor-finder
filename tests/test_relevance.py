@@ -23,7 +23,6 @@ from research_finder.verification import (
     VerifiedResearcherCandidate,
 )
 
-
 PROFILE_URL = (
     "https://www.deakin.edu.au/"
     "profile/jane-smith"
