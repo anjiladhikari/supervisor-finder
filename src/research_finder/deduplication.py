@@ -24,7 +24,6 @@ from research_finder.verification import (
     VerifiedResearcherCandidate,
 )
 
-
 T = TypeVar("T")
 
 
@@ -102,7 +101,7 @@ def canonical_source_url_key(
     return key
 
 
-def deduplicate_by_source_url(
+def deduplicate_by_source_url[T](
     items: list[T],
     *,
     url_getter: Callable[[T], str],

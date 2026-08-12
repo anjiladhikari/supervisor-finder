@@ -1,5 +1,9 @@
 from pydantic import ValidationError
 
+from research_finder.deduplication import (
+    deduplicate_by_source_url,
+    deduplicate_scored_researchers,
+)
 from research_finder.llm import create_chat_model
 from research_finder.location import (
     LocationLookupError,
@@ -45,11 +49,6 @@ from research_finder.web_content import (
 )
 from research_finder.web_search import (
     create_search_client,
-)
-
-from research_finder.deduplication import (
-    deduplicate_by_source_url,
-    deduplicate_scored_researchers,
 )
 
 

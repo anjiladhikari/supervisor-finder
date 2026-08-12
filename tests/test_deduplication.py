@@ -10,6 +10,7 @@ from research_finder.models import (
     SearchRequest,
 )
 from research_finder.relevance import (
+    ScoredResearcherProfile,
     score_researcher_profile,
 )
 from research_finder.research_profile import (
@@ -27,10 +28,6 @@ from research_finder.search_queries import (
 )
 from research_finder.verification import (
     VerifiedResearcherCandidate,
-)
-from research_finder.relevance import (
-    ScoredResearcherProfile,
-    score_researcher_profile,
 )
 
 PROFILE_URL = "https://www.deakin.edu.au/profile/jane-smith"
@@ -105,9 +102,9 @@ def create_project() -> ResearchEvidenceItem:
 
 
 def test_canonical_url_removes_tracking() -> None:
-    first = canonical_source_url_key(("https://www.deakin.edu.au/research/?utm_source=test#top"))
+    first = canonical_source_url_key("https://www.deakin.edu.au/research/?utm_source=test#top")
 
-    second = canonical_source_url_key(("https://deakin.edu.au/research"))
+    second = canonical_source_url_key("https://deakin.edu.au/research")
 
     assert first == second
 

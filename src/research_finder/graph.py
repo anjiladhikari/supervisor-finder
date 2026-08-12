@@ -72,6 +72,8 @@ def build_research_graph():
     )
     builder.add_node("score_relevance", score_relevance)
     builder.add_node("remove_duplicates", remove_duplicates)
+
+    
     builder.add_node("rank_results", rank_results)
     builder.add_node("generate_final_output", generate_final_output)
 
