@@ -47,6 +47,11 @@ from research_finder.web_search import (
     create_search_client,
 )
 
+from research_finder.deduplication import (
+    deduplicate_by_source_url,
+    deduplicate_scored_researchers,
+)
+
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
     """Create predictable initial values for the workflow."""
@@ -754,6 +759,138 @@ def organise_researcher_profiles(
     }
 
 
+def deduplicate_results(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Deduplicate researchers and source pages."""
+
+    result: dict[str, object] = {}
+
+    page_keys = (
+        "researcher_pages",
+        "lab_pages",
+        "project_pages",
+        "publication_pages",
+    )
+
+    seen_page_urls: set[str] = set()
+    removed_pages = 0
+
+    for page_key in page_keys:
+        pages = list(
+            state.get(
+                page_key,
+                [],
+            )
+        )
+
+        unique_pages, removed = deduplicate_by_source_url(
+            pages,
+            url_getter=lambda page: str(page.url),
+            seen_keys=seen_page_urls,
+        )
+
+        result[page_key] = unique_pages
+        removed_pages += removed
+
+    document_keys = (
+        "researcher_documents",
+        "lab_documents",
+        "project_documents",
+        "publication_documents",
+    )
+
+    seen_document_urls: set[str] = set()
+    removed_documents = 0
+
+    for document_key in document_keys:
+        documents = list(
+            state.get(
+                document_key,
+                [],
+            )
+        )
+
+        unique_documents, removed = deduplicate_by_source_url(
+            documents,
+            url_getter=lambda document: str(document.final_url),
+            seen_keys=(seen_document_urls),
+        )
+
+        result[document_key] = unique_documents
+        removed_documents += removed
+
+    scored_results = list(
+        state.get(
+            "scored_results",
+            [],
+        )
+    )
+
+    if not scored_results:
+        result["deduplicated_results"] = []
+
+        result["execution_log"] = [
+            (
+                "Deduplication completed: "
+                "0 scored researchers -> "
+                "0 unique researchers; "
+                f"{removed_pages} duplicate "
+                "source pages and "
+                f"{removed_documents} duplicate "
+                "documents removed."
+            )
+        ]
+
+        return result
+
+    request = state.get("request")
+
+    if request is None:
+        result["deduplicated_results"] = []
+
+        result["errors"] = [("Researcher deduplication requires a validated search request.")]
+
+        result["execution_log"] = ["Deduplication failed."]
+
+        return result
+
+    expanded_topics = list(
+        state.get(
+            "expanded_topics",
+            [],
+        )
+    )
+
+    deduplicated = deduplicate_scored_researchers(
+        scored_results,
+        research_topic=(request.research_topic),
+        expanded_topics=(expanded_topics),
+    )
+
+    result["deduplicated_results"] = deduplicated
+
+    duplicate_researchers = len(scored_results) - len(deduplicated)
+
+    result["execution_log"] = [
+        (
+            "Deduplication completed: "
+            f"{len(scored_results)} scored "
+            "researchers -> "
+            f"{len(deduplicated)} unique "
+            "researchers; "
+            f"{duplicate_researchers} duplicate "
+            "researchers merged, "
+            f"{removed_pages} duplicate source "
+            "pages and "
+            f"{removed_documents} duplicate "
+            "documents removed."
+        )
+    ]
+
+    return result
+
+
 def score_relevance(
     state: ResearchGraphState,
 ) -> dict[str, object]:
@@ -769,18 +906,8 @@ def score_relevance(
     if not profiles:
         return {
             "scored_results": [],
-            "warnings": [
-                (
-                    "No organised researchers were "
-                    "available for relevance scoring."
-                )
-            ],
-            "execution_log": [
-                (
-                    "Relevance scoring completed: "
-                    "0 researchers scored."
-                )
-            ],
+            "warnings": [("No organised researchers were available for relevance scoring.")],
+            "execution_log": [("Relevance scoring completed: 0 researchers scored.")],
         }
 
     request = state.get("request")
@@ -788,15 +915,8 @@ def score_relevance(
     if request is None:
         return {
             "scored_results": [],
-            "errors": [
-                (
-                    "Relevance scoring requires "
-                    "a validated search request."
-                )
-            ],
-            "execution_log": [
-                "Relevance scoring failed."
-            ],
+            "errors": [("Relevance scoring requires a validated search request.")],
+            "execution_log": ["Relevance scoring failed."],
         }
 
     expanded_topics = list(
@@ -806,24 +926,16 @@ def score_relevance(
         )
     )
 
-    scored_results = (
-        score_researcher_profiles(
-            profiles,
-            research_topic=(
-                request.research_topic
-            ),
-            expanded_topics=expanded_topics,
-        )
+    scored_results = score_researcher_profiles(
+        profiles,
+        research_topic=(request.research_topic),
+        expanded_topics=expanded_topics,
     )
 
     return {
         "scored_results": scored_results,
         "execution_log": [
-            (
-                "Relevance scoring completed: "
-                f"{len(scored_results)} "
-                "researchers scored."
-            )
+            (f"Relevance scoring completed: {len(scored_results)} researchers scored.")
         ],
     }
 
