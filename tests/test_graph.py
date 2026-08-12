@@ -112,11 +112,8 @@ def test_graph_returns_valid_empty_response(
         ("Webpage download completed: 0 pages attempted, 0 documents created."),
         ("Researcher extraction completed: 0 documents processed, 0 candidates created."),
         ("Researcher detail extraction completed: 0 documents processed, 0 researchers enriched."),
-        (
-            "Researcher verification completed: "
-            "0 candidates checked, "
-            "0 verified."
-        ),
+        ("Researcher verification completed: 0 candidates checked, 0 verified."),
+        ("Researcher profile organisation completed: 0 researchers organised."),
         "Relevance-scoring placeholder completed.",
         "Duplicate removal completed.",
         "Result ranking completed.",
