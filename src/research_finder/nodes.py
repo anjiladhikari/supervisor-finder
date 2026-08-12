@@ -9,6 +9,9 @@ from research_finder.models import SearchRequest, SearchResponse
 from research_finder.official_page_search import (
     execute_official_searches,
 )
+from research_finder.relevance import (
+    score_researcher_profiles,
+)
 from research_finder.research_profile import (
     organise_verified_researchers,
 )
@@ -754,14 +757,74 @@ def organise_researcher_profiles(
 def score_relevance(
     state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Pass verified results forward until scoring is implemented."""
+    """Score verified researchers against the topic."""
 
-    verified_results = state.get("verified_results", [])
+    profiles = list(
+        state.get(
+            "organised_results",
+            [],
+        )
+    )
+
+    if not profiles:
+        return {
+            "scored_results": [],
+            "warnings": [
+                (
+                    "No organised researchers were "
+                    "available for relevance scoring."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Relevance scoring completed: "
+                    "0 researchers scored."
+                )
+            ],
+        }
+
+    request = state.get("request")
+
+    if request is None:
+        return {
+            "scored_results": [],
+            "errors": [
+                (
+                    "Relevance scoring requires "
+                    "a validated search request."
+                )
+            ],
+            "execution_log": [
+                "Relevance scoring failed."
+            ],
+        }
+
+    expanded_topics = list(
+        state.get(
+            "expanded_topics",
+            [],
+        )
+    )
+
+    scored_results = (
+        score_researcher_profiles(
+            profiles,
+            research_topic=(
+                request.research_topic
+            ),
+            expanded_topics=expanded_topics,
+        )
+    )
 
     return {
-        "scored_results": verified_results,
-        "warnings": ["Deterministic relevance scoring is not implemented yet."],
-        "execution_log": ["Relevance-scoring placeholder completed."],
+        "scored_results": scored_results,
+        "execution_log": [
+            (
+                "Relevance scoring completed: "
+                f"{len(scored_results)} "
+                "researchers scored."
+            )
+        ],
     }
 
 
