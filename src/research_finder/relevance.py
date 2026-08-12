@@ -89,19 +89,13 @@ _STOP_WORDS = {
 }
 
 
-_TOKEN_PATTERN = re.compile(
-    r"[a-z0-9]+"
-)
+_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
 
 def _normalise(value: str) -> str:
     """Normalise text for matching."""
 
-    return " ".join(
-        _TOKEN_PATTERN.findall(
-            value.casefold()
-        )
-    )
+    return " ".join(_TOKEN_PATTERN.findall(value.casefold()))
 
 
 def _tokenise(value: str) -> set[str]:
@@ -109,13 +103,8 @@ def _tokenise(value: str) -> set[str]:
 
     return {
         token
-        for token in _TOKEN_PATTERN.findall(
-            value.casefold()
-        )
-        if (
-            len(token) >= 2
-            and token not in _STOP_WORDS
-        )
+        for token in _TOKEN_PATTERN.findall(value.casefold())
+        if (len(token) >= 2 and token not in _STOP_WORDS)
     }
 
 
@@ -132,9 +121,7 @@ def build_search_topics(
         research_topic,
         *expanded_topics,
     ]:
-        cleaned = " ".join(
-            topic.split()
-        )
+        cleaned = " ".join(topic.split())
 
         if not cleaned:
             continue
@@ -173,38 +160,20 @@ def _text_match_score(
         if not topic_tokens:
             continue
 
-        matched_tokens = (
-            topic_tokens
-            & text_tokens
-        )
+        matched_tokens = topic_tokens & text_tokens
 
-        coverage = (
-            len(matched_tokens)
-            / len(topic_tokens)
-        )
+        coverage = len(matched_tokens) / len(topic_tokens)
 
-        normalised_topic = _normalise(
-            topic
-        )
+        normalised_topic = _normalise(topic)
 
-        if (
-            normalised_topic
-            and normalised_topic
-            in normalised_text
-        ):
+        if normalised_topic and normalised_topic in normalised_text:
             coverage = 1.0
 
         # Original user topic receives full weight.
         # Expanded topics receive slightly less weight.
-        topic_weight = (
-            1.0
-            if index == 0
-            else 0.9
-        )
+        topic_weight = 1.0 if index == 0 else 0.9
 
-        weighted_score = (
-            coverage * topic_weight
-        )
+        weighted_score = coverage * topic_weight
 
         best_score = max(
             best_score,
@@ -222,10 +191,7 @@ def _evidence_item_text(
 ) -> str:
     """Combine evidence fields for matching."""
 
-    return (
-        f"{item.name} "
-        f"{item.evidence_text}"
-    )
+    return f"{item.name} {item.evidence_text}"
 
 
 def _best_group_score(
@@ -252,10 +218,7 @@ def _weighted_score(
 ) -> int:
     """Convert a 0–1 match into category points."""
 
-    return round(
-        match_score
-        * maximum_points
-    )
+    return round(match_score * maximum_points)
 
 
 def _collect_matched_terms(
@@ -264,54 +227,26 @@ def _collect_matched_terms(
 ) -> list[str]:
     """Collect matched topic tokens for explanation."""
 
-    candidate = (
-        profile
-        .verified_researcher
-        .candidate
-    )
+    candidate = profile.verified_researcher.candidate
 
     profile_text = " ".join(
         [
             *profile.research_interests,
-            *[
-                _evidence_item_text(item)
-                for item
-                in profile.current_projects
-            ],
-            *[
-                _evidence_item_text(item)
-                for item
-                in profile.previous_projects
-            ],
-            *[
-                _evidence_item_text(item)
-                for item
-                in profile.unknown_projects
-            ],
-            *[
-                _evidence_item_text(item)
-                for item
-                in candidate.labs
-            ],
-            *[
-                _evidence_item_text(item)
-                for item
-                in candidate.publications
-            ],
+            *[_evidence_item_text(item) for item in profile.current_projects],
+            *[_evidence_item_text(item) for item in profile.previous_projects],
+            *[_evidence_item_text(item) for item in profile.unknown_projects],
+            *[_evidence_item_text(item) for item in candidate.labs],
+            *[_evidence_item_text(item) for item in candidate.publications],
         ]
     )
 
-    profile_tokens = _tokenise(
-        profile_text
-    )
+    profile_tokens = _tokenise(profile_text)
 
     matched_terms: list[str] = []
     seen: set[str] = set()
 
     for topic in topics:
-        for token in _TOKEN_PATTERN.findall(
-            topic.casefold()
-        ):
+        for token in _TOKEN_PATTERN.findall(topic.casefold()):
             if (
                 token in _STOP_WORDS
                 or len(token) < 2
@@ -368,22 +303,16 @@ def _build_explanation(
     )
 
     explanation = [
-        (
-            f"{label} contributed "
-            f"{points}/{maximum} points."
-        )
-        for label, points, maximum
-        in categories
+        (f"{label} contributed {points}/{maximum} points.")
+        for label, points, maximum in categories
         if points > 0
     ]
 
     if not explanation:
         explanation.append(
-            (
-                "No meaningful lexical overlap was "
-                "found between the research topic "
-                "and verified researcher evidence."
-            )
+            "No meaningful lexical overlap was "
+            "found between the research topic "
+            "and verified researcher evidence."
         )
 
     return explanation
@@ -402,72 +331,36 @@ def score_researcher_profile(
         expanded_topics=expanded_topics,
     )
 
-    candidate = (
-        profile
-        .verified_researcher
-        .candidate
+    candidate = profile.verified_researcher.candidate
+
+    interests_match = _best_group_score(
+        profile.research_interests,
+        topics,
     )
 
-    interests_match = (
-        _best_group_score(
-            profile.research_interests,
-            topics,
-        )
+    current_projects_match = _best_group_score(
+        [_evidence_item_text(item) for item in profile.current_projects],
+        topics,
     )
 
-    current_projects_match = (
-        _best_group_score(
-            [
-                _evidence_item_text(item)
-                for item
-                in profile.current_projects
-            ],
-            topics,
-        )
+    publications_match = _best_group_score(
+        [_evidence_item_text(item) for item in candidate.publications],
+        topics,
     )
 
-    publications_match = (
-        _best_group_score(
-            [
-                _evidence_item_text(item)
-                for item
-                in candidate.publications
-            ],
-            topics,
-        )
+    labs_match = _best_group_score(
+        [_evidence_item_text(item) for item in candidate.labs],
+        topics,
     )
 
-    labs_match = (
-        _best_group_score(
-            [
-                _evidence_item_text(item)
-                for item
-                in candidate.labs
-            ],
-            topics,
-        )
+    previous_projects_match = _best_group_score(
+        [_evidence_item_text(item) for item in profile.previous_projects],
+        topics,
     )
 
-    previous_projects_match = (
-        _best_group_score(
-            [
-                _evidence_item_text(item)
-                for item
-                in profile.previous_projects
-            ],
-            topics,
-        )
-    )
-
-    unknown_projects_match = (
-        _best_group_score(
-            [
-                _evidence_item_text(item)
-                for item
-                in profile.unknown_projects
-            ],
-            topics,
-        )
+    unknown_projects_match = _best_group_score(
+        [_evidence_item_text(item) for item in profile.unknown_projects],
+        topics,
     )
 
     breakdown = RelevanceScoreBreakdown(
@@ -530,18 +423,12 @@ def score_researcher_profile(
                 topics,
             )
         ),
-        match_explanation=(
-            _build_explanation(
-                breakdown
-            )
-        ),
+        match_explanation=(_build_explanation(breakdown)),
     )
 
 
 def score_researcher_profiles(
-    profiles: list[
-        OrganisedResearcherProfile
-    ],
+    profiles: list[OrganisedResearcherProfile],
     *,
     research_topic: str,
     expanded_topics: list[str],
