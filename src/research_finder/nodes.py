@@ -37,6 +37,9 @@ from research_finder.web_content import (
 from research_finder.web_search import (
     create_search_client,
 )
+from research_finder.verification import (
+    verify_researcher_candidates,
+)
 
 
 def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
@@ -536,12 +539,7 @@ def extract_researcher_details(
     if not candidates:
         return {
             "enriched_candidates": [],
-            "warnings": [
-                (
-                    "No researcher candidates were "
-                    "available for detail extraction."
-                )
-            ],
+            "warnings": [("No researcher candidates were available for detail extraction.")],
             "execution_log": [
                 (
                     "Researcher detail extraction completed: "
@@ -578,12 +576,7 @@ def extract_researcher_details(
 
         return {
             "enriched_candidates": enriched,
-            "warnings": [
-                (
-                    "No supporting documents were "
-                    "available for researcher details."
-                )
-            ],
+            "warnings": [("No supporting documents were available for researcher details.")],
             "execution_log": [
                 (
                     "Researcher detail extraction completed: "
@@ -595,19 +588,15 @@ def extract_researcher_details(
 
     model = create_chat_model()
 
-    outcome = (
-        extract_researcher_detail_documents(
-            documents=documents,
-            candidates=candidates,
-            model=model,
-        )
+    outcome = extract_researcher_detail_documents(
+        documents=documents,
+        candidates=candidates,
+        model=model,
     )
 
     enriched = enrich_researcher_candidates(
         candidates=candidates,
-        associations=list(
-            outcome.associations
-        ),
+        associations=list(outcome.associations),
     )
 
     result: dict[str, object] = {
@@ -634,6 +623,7 @@ def extract_researcher_details(
         ]
 
     return result
+
 
 def verify_current_affiliation(
     _: ResearchGraphState,
