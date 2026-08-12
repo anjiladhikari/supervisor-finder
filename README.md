@@ -36,12 +36,12 @@ The following pipeline steps are fully implemented and tested:
 - [x] Structured researcher extraction from downloaded pages (LLM)
 - [x] Researcher detail extraction — emails, labs, projects, publications (LLM)
 - [x] Lightweight affiliation verification (deterministic, no extra LLM calls)
+- [x] Deterministic relevance scoring
 - [x] Partial failure handling at every stage
 - [x] Conditional LangGraph routing
 
 The following steps are still placeholders:
 
-- [ ] Deterministic relevance scoring
 - [ ] Duplicate removal and result ranking
 - [ ] Streamlit user interface
 
@@ -178,6 +178,35 @@ stored as unknown rather than guessed.
 
 ---
 
+## Deterministic relevance scoring
+
+Verified researcher profiles receive a relevance score from 0 to 100.
+
+The scoring weights are:
+
+- Research interests: 40 points
+- Current projects: 25 points
+- Publications: 15 points
+- Research labs/groups: 10 points
+- Previous projects: 5 points
+- Projects with unknown status: 5 points
+
+The original user research topic receives full matching weight.
+
+Expanded topics are also considered but receive slightly lower weight to
+reduce broad-topic false positives.
+
+Scoring is deterministic and does not use an LLM.
+
+Each result stores:
+
+- Total relevance score
+- Category score breakdown
+- Matched topic terms
+- Human-readable scoring explanation
+
+---
+
 ## Key modules
 
 | Module | Purpose |
@@ -195,6 +224,7 @@ stored as unknown rather than guessed.
 | `researcher_details.py` | LLM-based extraction of emails, labs, projects and publications; candidate enrichment |
 | `verification.py` | Deterministic verification of candidates against downloaded evidence |
 | `research_profile.py` | Deterministic project status classification and researcher profile organisation |
+| `relevance.py` | Deterministic relevance scoring of profiles using weighted lexical intersection |
 | `nodes.py` | LangGraph node functions |
 | `routes.py` | Conditional routing functions |
 | `graph.py` | LangGraph graph assembly and compilation |
