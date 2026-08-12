@@ -114,10 +114,7 @@ def test_graph_returns_valid_empty_response(
         ("Researcher detail extraction completed: 0 documents processed, 0 researchers enriched."),
         ("Researcher verification completed: 0 candidates checked, 0 verified."),
         ("Researcher profile organisation completed: 0 researchers organised."),
-        (
-            "Relevance scoring completed: "
-            "0 researchers scored."
-        ),
+        ("Relevance scoring completed: 0 researchers scored."),
         "Duplicate removal completed.",
         "Result ranking completed.",
         "Final response generated.",
