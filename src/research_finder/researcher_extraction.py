@@ -295,7 +295,7 @@ def extract_researcher_documents(
                 document=document,
                 model=model,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             logger.exception("Researcher extraction failed for one document.")
             failed_documents += 1
             continue
