@@ -26,6 +26,9 @@ from research_finder.university_directory import UniversityRecord
 from research_finder.verification import (
     VerifiedResearcherCandidate,
 )
+from research_finder.relevance import (
+    ScoredResearcherProfile,
+)
 from research_finder.web_content import (
     DownloadedWebPage,
 )
@@ -80,7 +83,7 @@ class ResearchGraphState(WorkflowMessages, total=False):
     verified_results: list[VerifiedResearcherCandidate]
     organised_results: list[OrganisedResearcherProfile]
 
-    scored_results: list[ResearcherResult]
+    scored_results: list[ScoredResearcherProfile]
     deduplicated_results: list[ResearcherResult]
     ranked_results: list[ResearcherResult]
 
