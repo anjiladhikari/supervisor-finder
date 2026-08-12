@@ -33,13 +33,14 @@ The following pipeline steps are fully implemented and tested:
 - [x] Web search with bounded retries and duplicate removal (DDGS)
 - [x] Official-domain result validation
 - [x] Page download and HTML cleaning (httpx + BeautifulSoup)
+- [x] Structured researcher extraction from downloaded pages (LLM)
+- [x] Researcher detail extraction — emails, labs, projects, publications (LLM)
+- [x] Lightweight affiliation verification (deterministic, no extra LLM calls)
 - [x] Partial failure handling at every stage
 - [x] Conditional LangGraph routing
 
 The following steps are still placeholders:
 
-- [ ] Structured information extraction from downloaded pages
-- [ ] Current affiliation verification
 - [ ] Deterministic relevance scoring
 - [ ] Duplicate removal and result ranking
 - [ ] Streamlit user interface
@@ -98,11 +99,13 @@ START
                                                                                       └─ search_projects
                                                                                            └─ search_publications
                                                                                                 └─ download_webpage_content
-                                                                                                     └─ verify_current_affiliation
-                                                                                                          └─ score_relevance
-                                                                                                               └─ remove_duplicates
-                                                                                                                    └─ rank_results
-                                                                                                                         └─ generate_final_output → END
+                                                                                                     └─ extract_researcher_information
+                                                                                                          └─ extract_researcher_details
+                                                                                                               └─ verify_current_affiliation
+                                                                                                                    └─ score_relevance
+                                                                                                                         └─ remove_duplicates
+                                                                                                                              └─ rank_results
+                                                                                                                                   └─ generate_final_output → END
 ```
 
 ### Shared state
@@ -118,8 +121,35 @@ START
 | `search_queries` | `list[OfficialSearchQuery]` | Domain-restricted queries |
 | `researcher_pages` / `lab_pages` / `project_pages` / `publication_pages` | `list[OfficialSearchPage]` | Search result pages per target |
 | `researcher_documents` / `lab_documents` / `project_documents` / `publication_documents` | `list[DownloadedWebPage]` | Cleaned page text per target |
-| `verified_results` / `scored_results` / `ranked_results` | `list[ResearcherResult]` | Intermediate result lists |
+| `extracted_candidates` | `list[ResearcherCandidate]` | Candidates from researcher pages |
+| `enriched_candidates` | `list[EnrichedResearcherCandidate]` | Candidates with emails, labs, projects, publications attached |
+| `verified_results` | `list[VerifiedResearcherCandidate]` | Candidates that passed deterministic verification |
+| `scored_results` / `deduplicated_results` / `ranked_results` | `list[ResearcherResult]` | Intermediate result lists |
 | `errors` / `warnings` / `execution_log` | `list[str]` | Append-only message lists |
+
+---
+
+## Lightweight researcher verification
+
+The workflow performs deterministic verification using the official
+university pages already downloaded during discovery.
+
+A researcher is retained only when:
+
+- Their profile source belongs to the official university domain
+- The downloaded profile contains their name
+- Their extraction evidence exists in the downloaded page
+
+Research labs, projects, publications and public email addresses are also
+checked against their downloaded official source.
+
+Unsupported claims are removed without rejecting an otherwise valid
+researcher.
+
+The verification timestamp and number of verified source pages are stored
+for each researcher.
+
+This step does not perform additional web searches or LLM calls.
 
 ---
 
@@ -136,6 +166,9 @@ START
 | `web_search.py` | DDGS-backed free web search client with retries and deduplication |
 | `official_page_search.py` | Executes search queries, filters results to official domains |
 | `web_content.py` | Downloads and cleans official pages with httpx and BeautifulSoup |
+| `researcher_extraction.py` | LLM-based structured extraction of researcher candidates from pages |
+| `researcher_details.py` | LLM-based extraction of emails, labs, projects and publications; candidate enrichment |
+| `verification.py` | Deterministic verification of candidates against downloaded evidence |
 | `nodes.py` | LangGraph node functions |
 | `routes.py` | Conditional routing functions |
 | `graph.py` | LangGraph graph assembly and compilation |
@@ -211,6 +244,9 @@ Run any script directly to verify a specific layer against real APIs:
 | `scripts/check_official_page_search.py` | End-to-end search for official researcher pages |
 | `scripts/check_web_content.py` | Page download and text extraction |
 | `scripts/check_topic_expansion.py` | Full topic expansion via LLM |
+| `scripts/check_researcher_extraction.py` | Structured researcher extraction from a real page |
+| `scripts/check_researcher_details.py` | Detail extraction and enrichment for Deakin University |
+| `scripts/check_verification.py` | Deterministic verification against a fixed candidate and document |
 
 ```bash
 python scripts/check_web_content.py
