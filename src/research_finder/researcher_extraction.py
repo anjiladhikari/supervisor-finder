@@ -9,7 +9,6 @@ from langchain_core.language_models.chat_models import (
 from pydantic import (
     Field,
     HttpUrl,
-    field_validator,
 )
 
 from research_finder.models import StrictModel
@@ -18,6 +17,7 @@ from research_finder.web_content import (
 )
 
 logger = logging.getLogger(__name__)
+
 class ResearcherExtractionDraft(StrictModel):
     """One researcher extracted by the LLM."""
 
@@ -26,94 +26,32 @@ class ResearcherExtractionDraft(StrictModel):
         max_length=200,
     )
     academic_title: str | None = Field(
-        default=None,
         max_length=150,
     )
     role: str | None = Field(
-        default=None,
         max_length=200,
     )
     research_interests: list[str] = Field(
-        default_factory=list,
         max_length=15,
     )
     profile_summary: str | None = Field(
-        default=None,
         max_length=1000,
     )
     evidence_text: str = Field(
         min_length=5,
         max_length=500,
-        description=("An exact continuous excerpt copied from the supplied webpage."),
+        description=(
+            "An exact continuous excerpt copied from "
+            "the supplied webpage."
+        ),
     )
-
-    @field_validator(
-        "full_name",
-        "academic_title",
-        "role",
-        "profile_summary",
-        "evidence_text",
-        mode="before",
-    )
-    @classmethod
-    def normalise_text(
-        cls,
-        value: object,
-    ) -> object:
-        """Collapse repeated whitespace."""
-
-        if isinstance(value, str):
-            cleaned = " ".join(value.split())
-
-            if not cleaned:
-                return None
-
-            return cleaned
-
-        return value
-
-    @field_validator(
-        "research_interests",
-        mode="before",
-    )
-    @classmethod
-    def normalise_interests(
-        cls,
-        value: object,
-    ) -> object:
-        """Clean and deduplicate research interests."""
-
-        if not isinstance(value, list):
-            return value
-
-        interests: list[str] = []
-        seen: set[str] = set()
-
-        for item in value:
-            if not isinstance(item, str):
-                continue
-
-            cleaned = " ".join(item.split())
-
-            if not cleaned:
-                continue
-
-            comparison_key = cleaned.casefold()
-
-            if comparison_key in seen:
-                continue
-
-            seen.add(comparison_key)
-            interests.append(cleaned)
-
-        return interests
-
 
 class ResearcherExtractionBatch(StrictModel):
     """Researchers extracted from one webpage."""
 
-    researchers: list[ResearcherExtractionDraft] = Field(
-        default_factory=list,
+    researchers: list[
+        ResearcherExtractionDraft
+    ] = Field(
         max_length=20,
     )
 
@@ -228,10 +166,10 @@ def extract_researchers_from_document(
     model: BaseChatModel,
 ) -> list[ResearcherCandidate]:
     """Extract grounded candidates from one document."""
-
     structured_model = model.with_structured_output(
         ResearcherExtractionBatch,
         method="json_schema",
+        strict=True,
     )
 
     raw_response = structured_model.invoke(build_researcher_extraction_messages(document))
