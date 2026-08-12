@@ -20,7 +20,9 @@ from research_finder.university_directory import UniversityRecord
 from research_finder.web_content import (
     DownloadedWebPage,
 )
-
+from research_finder.researcher_details import (
+    EnrichedResearcherCandidate,
+)
 
 class WorkflowMessages(TypedDict, total=False):
     """Append-only messages shared by internal and output state."""
@@ -65,6 +67,8 @@ class ResearchGraphState(WorkflowMessages, total=False):
     publication_documents: list[DownloadedWebPage]
 
     extracted_candidates: list[ResearcherCandidate]
+
+    enriched_candidates: list[EnrichedResearcherCandidate]
 
     verified_results: list[ResearcherResult]
     scored_results: list[ResearcherResult]
