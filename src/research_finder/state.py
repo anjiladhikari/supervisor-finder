@@ -10,6 +10,9 @@ from research_finder.models import (
 from research_finder.official_page_search import (
     OfficialSearchPage,
 )
+from research_finder.relevance import (
+    ScoredResearcherProfile,
+)
 from research_finder.research_profile import (
     OrganisedResearcherProfile,
 )
@@ -25,9 +28,6 @@ from research_finder.search_queries import (
 from research_finder.university_directory import UniversityRecord
 from research_finder.verification import (
     VerifiedResearcherCandidate,
-)
-from research_finder.relevance import (
-    ScoredResearcherProfile,
 )
 from research_finder.web_content import (
     DownloadedWebPage,
