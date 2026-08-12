@@ -20,6 +20,9 @@ from research_finder.search_queries import (
     OfficialSearchQuery,
 )
 from research_finder.university_directory import UniversityRecord
+from research_finder.verification import (
+    VerifiedResearcherCandidate,
+)
 from research_finder.web_content import (
     DownloadedWebPage,
 )
@@ -71,7 +74,7 @@ class ResearchGraphState(WorkflowMessages, total=False):
 
     enriched_candidates: list[EnrichedResearcherCandidate]
 
-    verified_results: list[ResearcherResult]
+    verified_results: list[VerifiedResearcherCandidate]
     scored_results: list[ResearcherResult]
     deduplicated_results: list[ResearcherResult]
     ranked_results: list[ResearcherResult]
