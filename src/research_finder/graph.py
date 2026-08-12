@@ -1,9 +1,9 @@
-from bs4 import builder
 from langgraph.graph import END, START, StateGraph
 
 from research_finder.nodes import (
     download_webpage_content,
     expand_research_topic,
+    extract_researcher_details,
     extract_researcher_information,
     find_universities,
     generate_final_output,
@@ -18,7 +18,6 @@ from research_finder.nodes import (
     search_researchers,
     validate_input,
     verify_current_affiliation,
-    extract_researcher_details,
 )
 from research_finder.routes import (
     route_after_search_query_generation,
