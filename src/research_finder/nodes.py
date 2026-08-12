@@ -30,15 +30,15 @@ from research_finder.university_directory import (
     get_universities,
     supports_country,
 )
+from research_finder.verification import (
+    verify_researcher_candidates,
+)
 from research_finder.web_content import (
     create_page_downloader,
     download_official_pages,
 )
 from research_finder.web_search import (
     create_search_client,
-)
-from research_finder.verification import (
-    verify_researcher_candidates,
 )
 
 
@@ -626,15 +626,99 @@ def extract_researcher_details(
 
 
 def verify_current_affiliation(
-    _: ResearchGraphState,
+    state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Placeholder for current-university-affiliation verification."""
+    """Verify researchers using downloaded official evidence."""
 
-    return {
-        "verified_results": [],
-        "warnings": ["Current affiliation verification is not implemented yet."],
-        "execution_log": ["Affiliation-verification placeholder completed."],
+    candidates = list(
+        state.get(
+            "enriched_candidates",
+            [],
+        )
+    )
+
+    if not candidates:
+        return {
+            "verified_results": [],
+            "warnings": [
+                (
+                    "No enriched researchers were "
+                    "available for verification."
+                )
+            ],
+            "execution_log": [
+                (
+                    "Researcher verification completed: "
+                    "0 candidates checked, "
+                    "0 verified."
+                )
+            ],
+        }
+
+    documents = [
+        *state.get(
+            "researcher_documents",
+            [],
+        ),
+        *state.get(
+            "lab_documents",
+            [],
+        ),
+        *state.get(
+            "project_documents",
+            [],
+        ),
+        *state.get(
+            "publication_documents",
+            [],
+        ),
+    ]
+
+    outcome = verify_researcher_candidates(
+        candidates=candidates,
+        documents=documents,
+    )
+
+    result: dict[str, object] = {
+        "verified_results": list(
+            outcome.verified_candidates
+        ),
+        "execution_log": [
+            (
+                "Researcher verification completed: "
+                f"{outcome.attempted_candidates} "
+                "candidates checked, "
+                f"{len(outcome.verified_candidates)} "
+                "verified."
+            )
+        ],
     }
+
+    warnings: list[str] = []
+
+    if outcome.rejected_candidates:
+        warnings.append(
+            
+                f"{outcome.rejected_candidates} "
+                "researcher candidates were rejected "
+                "because current official affiliation "
+                "could not be verified."
+            
+        )
+
+    if outcome.discarded_claims:
+        warnings.append(
+            
+                f"{outcome.discarded_claims} "
+                "unsupported researcher claims "
+                "were discarded."
+            
+        )
+
+    if warnings:
+        result["warnings"] = warnings
+
+    return result
 
 
 def score_relevance(
