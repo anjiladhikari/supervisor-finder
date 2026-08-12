@@ -1,6 +1,9 @@
 from operator import add
 from typing import Annotated, TypedDict
 
+from research_finder.ranking import (
+    RankedResearcherProfile,
+)
 from research_finder.models import (
     ResearcherResult,
     SearchRequest,
@@ -85,7 +88,7 @@ class ResearchGraphState(WorkflowMessages, total=False):
 
     scored_results: list[ScoredResearcherProfile]
     deduplicated_results: list[ScoredResearcherProfile]
-    ranked_results: list[ResearcherResult]
+    ranked_results: list[RankedResearcherProfile]
 
     search_attempt_count: int
     download_attempt_count: int
