@@ -84,7 +84,7 @@ class ResearchGraphState(WorkflowMessages, total=False):
     organised_results: list[OrganisedResearcherProfile]
 
     scored_results: list[ScoredResearcherProfile]
-    deduplicated_results: list[ResearcherResult]
+    deduplicated_results: list[ScoredResearcherProfile]
     ranked_results: list[ResearcherResult]
 
     search_attempt_count: int
