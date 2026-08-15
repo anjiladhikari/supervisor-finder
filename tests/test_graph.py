@@ -89,23 +89,39 @@ def test_graph_returns_valid_empty_response(
     assert output["errors"] == []
     assert response is not None
 
-    assert response.request.country == "Australia"
-    assert response.request.country_code == "AU"
-    assert response.request.state == "Victoria"
-    assert response.request.state_code == "AU-VIC"
-    assert response.result_count == 0
+    assert (
+    response["request"]["country"]
+    == "Australia"
+)
+
+    assert (
+    response["request"]["country_code"]
+    == "AU"
+)
+
+    assert (
+    response["request"]["state"]
+    == "Victoria"
+)
+
+    assert (
+    response["request"]["state_code"]
+    == "AU-VIC"
+)
+
+    assert response["result_count"] == 0
 
     assert any(
-        "No official researcher pages were found" in warning for warning in response.warnings
+        "No official researcher pages were found" in warning for warning in response["warnings"]
     )
     execution_log = output[
     "execution_log"
 ]
 
     assert (
-        execution_log[0]
-        == "Workflow initialized."
-    )
+    execution_log[0]
+    == "Workflow initialized."
+)
 
     assert (
     "Input validation completed."
