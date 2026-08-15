@@ -155,4 +155,4 @@ def choose_researcher_search_route(
     ):
         return "narrow_search"
 
-    return "search_labs"
+    return "download_webpage_content"
