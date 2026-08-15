@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from research_finder.graph import graph
+
 AUSTRALIAN_STATES = [
     "All Australia",
     "Australian Capital Territory",
@@ -23,7 +25,9 @@ st.set_page_config(
 )
 
 
-st.title("Research Supervisor & Lab Finder")
+st.title(
+    "Research Supervisor & Lab Finder"
+)
 
 st.write(
     "Find Australian university researchers, labs, "
@@ -38,7 +42,9 @@ st.caption(
 with st.container(
     border=True,
 ):
-    st.subheader("Find researchers")
+    st.subheader(
+        "Find researchers"
+    )
 
     with st.form(
         "research_search_form",
@@ -64,16 +70,18 @@ with st.container(
             )
 
         with results_col:
-            max_results = st.number_input(
-                "Maximum results",
-                min_value=1,
-                max_value=20,
-                value=5,
-                step=1,
-                help=(
-                    "Only the strongest matching "
-                    "researchers will be returned."
-                ),
+            max_results = (
+                st.number_input(
+                    "Maximum results",
+                    min_value=1,
+                    max_value=20,
+                    value=5,
+                    step=1,
+                    help=(
+                        "Only the strongest matching "
+                        "researchers will be returned."
+                    ),
+                )
             )
 
         research_topic = st.text_area(
@@ -131,14 +139,64 @@ if submitted:
             "search_request"
         ] = request
 
-        st.success(
-            "Search request is ready."
+        st.session_state.pop(
+            "search_result",
+            None,
         )
 
-        with st.expander(
-            "Request preview",
-        ):
-            st.json(request)
+        try:
+            with st.spinner(
+                "Searching official university sources..."
+            ):
+                output = graph.invoke(
+                    {
+                        "raw_request": request,
+                    }
+                )
+
+        except Exception:
+            st.error(
+                "The search could not be completed. "
+                "Please try again."
+            )
+
+        else:
+            st.session_state[
+                "search_result"
+            ] = output.get(
+                "final_response"
+            )
+
+
+response = st.session_state.get(
+    "search_result"
+)
+
+if response is not None:
+    result_count = response.get(
+        "result_count",
+        0,
+    )
+
+    if result_count:
+        st.success(
+            
+                f"Search complete — "
+                f"{result_count} researcher"
+                f"{'s' if result_count != 1 else ''} found."
+            
+        )
+
+    else:
+        st.info(
+            "Search completed, but no matching "
+            "researchers were found."
+        )
+
+    with st.expander(
+        "Workflow result",
+    ):
+        st.json(response)
 
 
 st.divider()
