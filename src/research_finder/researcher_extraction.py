@@ -40,8 +40,10 @@ class ResearcherExtractionDraft(StrictModel):
     )
     evidence_text: str = Field(
         min_length=5,
-        max_length=500,
-        description=("An exact continuous excerpt copied from the supplied webpage."),
+        description=(
+            "An exact continuous excerpt copied from the supplied webpage. "
+            "Keep it concise, preferably under  short."
+        ),
     )
 
 
@@ -117,6 +119,9 @@ Rules:
 5. Use only information explicitly present in the supplied content.
 6. If the page contains no researcher information, return an empty list.
 7. evidence_text must be an exact continuous excerpt copied from the page.
+   Keep evidence_text concise,
+   Include only enough text to prove the researcher's identity, role,
+   affiliation and relevant research interests.
 8. Keep research interests short and specific.
 9. Do not extract projects, publications, laboratories or email addresses.
 10. Do not treat names in navigation menus or unrelated lists as researchers.

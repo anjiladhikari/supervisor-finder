@@ -1,3 +1,4 @@
+from ddgs import http_client
 from pydantic import ValidationError
 
 from research_finder.deduplication import (
@@ -387,12 +388,32 @@ def _search_official_pages(
 
     client = create_search_client()
 
+    request = state.get(
+        "request"
+    )
+
+    max_pages: int | None = None
+
+    if (
+        target == SearchTarget.RESEARCHER
+        and request is not None
+    ):
+        max_pages = max(
+            request.max_results * 3,
+        3,
+    )
+
+
+
+
+
     outcome = execute_official_searches(
         search_queries=target_queries,
         target=target,
         client=client,
         max_results_per_query=1,
-    )
+        max_pages=max_pages,
+)
 
     warnings: list[str] = []
 
