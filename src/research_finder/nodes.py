@@ -399,21 +399,7 @@ def _search_official_pages(
 
     client = create_search_client()
 
-    request = state.get(
-        "request"
-    )
-
-    max_pages: int | None = None
-
-    if (
-        target == SearchTarget.RESEARCHER
-        and request is not None
-    ):
-        max_pages = max(
-            request.max_results * 3,
-        3,
-    )
-
+    
 
 
 
@@ -423,7 +409,7 @@ def _search_official_pages(
         target=target,
         client=client,
         max_results_per_query=1,
-        max_pages=max_pages,
+       
 )
 
     warnings: list[str] = []
