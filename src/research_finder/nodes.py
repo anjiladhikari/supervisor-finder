@@ -1267,33 +1267,74 @@ def _ranked_result_to_output(
 def generate_final_output(
     state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Build the final validated SearchResponse."""
+    """Build a clean website-ready response."""
 
-    request = state.get("request")
+    request = state.get(
+        "request"
+    )
 
     if request is None:
         return {
             "final_response": None,
             "execution_log": [
-                ("Final response could not be generated because the request was invalid.")
+                (
+                    "Final response could not be "
+                    "generated because the request "
+                    "was invalid."
+                )
             ],
         }
 
-    ranked_results = state.get("ranked_results", [])
-    workflow_warnings = list(state.get("warnings", []))
-    workflow_errors = state.get("errors", [])
-
-    workflow_warnings.extend(f"Workflow error: {error}" for error in workflow_errors)
-
-    response = SearchResponse(
-        request=request,
-        results=ranked_results[: request.max_results],
-        warnings=workflow_warnings,
+    ranked_results = list(
+        state.get(
+            "ranked_results",
+            [],
+        )
     )
+
+    final_results = [
+        _ranked_result_to_output(
+            ranked
+        )
+        for ranked
+        in ranked_results[
+            : request.max_results
+        ]
+    ]
+
+    response = {
+        "request": (
+            request.model_dump(
+                mode="json"
+            )
+        ),
+
+        "result_count": len(
+            final_results
+        ),
+
+        "results": final_results,
+
+        "warnings": list(
+            state.get(
+                "warnings",
+                [],
+            )
+        ),
+
+        "errors": list(
+            state.get(
+                "errors",
+                [],
+            )
+        ),
+    }
 
     return {
         "final_response": response,
-        "execution_log": ["Final response generated."],
+        "execution_log": [
+            "Final response generated."
+        ],
     }
 
 
