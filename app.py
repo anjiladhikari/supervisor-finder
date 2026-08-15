@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-
 AUSTRALIAN_STATES = [
     "All Australia",
     "Australian Capital Territory",
