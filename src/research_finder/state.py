@@ -1,8 +1,6 @@
 from operator import add
 from typing import Annotated, TypedDict
-from research_finder.search_strategy import (
-    SearchMode,
-)
+
 from research_finder.models import (
     SearchRequest,
     SearchResponse,
@@ -28,6 +26,9 @@ from research_finder.researcher_extraction import (
 )
 from research_finder.search_queries import (
     OfficialSearchQuery,
+)
+from research_finder.search_strategy import (
+    SearchMode,
 )
 from research_finder.university_directory import UniversityRecord
 from research_finder.verification import (

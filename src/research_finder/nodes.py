@@ -1,9 +1,5 @@
 from pydantic import ValidationError
-from research_finder.search_strategy import (
-    SearchMode,
-    build_broadened_search_topics,
-    build_narrowed_search_topics,
-)
+
 from research_finder.deduplication import (
     deduplicate_by_source_url,
     deduplicate_scored_researchers,
@@ -36,6 +32,11 @@ from research_finder.researcher_extraction import (
 from research_finder.search_queries import (
     SearchTarget,
     generate_official_search_queries,
+)
+from research_finder.search_strategy import (
+    SearchMode,
+    build_broadened_search_topics,
+    build_narrowed_search_topics,
 )
 from research_finder.state import ResearchGraphState
 from research_finder.topic_expansion import (
@@ -447,8 +448,6 @@ def broaden_search(
             )
         ],
     }
-
-
 def narrow_search(
     state: ResearchGraphState,
 ) -> dict[str, object]:

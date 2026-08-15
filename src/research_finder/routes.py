@@ -1,10 +1,11 @@
 from typing import Literal
 
-from research_finder.state import ResearchGraphState
 from research_finder.search_strategy import (
     SearchMode,
     choose_researcher_search_route,
 )
+from research_finder.state import ResearchGraphState
+
 
 def route_after_validation(
     state: ResearchGraphState,
@@ -77,8 +78,6 @@ def route_after_researcher_search(
             )
         ),
     )
-
-
 def route_after_university_discovery(
     state: ResearchGraphState,
 ) -> Literal["generate_search_queries", "generate_final_output"]:
