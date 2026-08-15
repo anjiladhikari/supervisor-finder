@@ -1,6 +1,7 @@
 from langgraph.graph import END, START, StateGraph
 
 from research_finder.nodes import (
+    broaden_search,
     download_webpage_content,
     expand_research_topic,
     extract_researcher_details,
@@ -9,6 +10,7 @@ from research_finder.nodes import (
     generate_final_output,
     generate_search_queries,
     initialize_workflow,
+    narrow_search,
     organise_researcher_profiles,
     rank_results,
     remove_duplicates,
@@ -21,6 +23,7 @@ from research_finder.nodes import (
     verify_current_affiliation,
 )
 from research_finder.routes import (
+    route_after_researcher_search,
     route_after_search_query_generation,
     route_after_university_discovery,
     route_after_validation,
@@ -46,6 +49,15 @@ def build_research_graph():
     builder.add_node("expand_research_topic", expand_research_topic)
     builder.add_node("find_universities", find_universities)
     builder.add_node("generate_search_queries", generate_search_queries)
+    builder.add_node(
+    "broaden_search",
+    broaden_search,
+)
+
+    builder.add_node(
+        "narrow_search",
+        narrow_search,
+    )
     builder.add_node("search_researchers", search_researchers)
     builder.add_node("search_labs", search_labs)
     builder.add_node("search_projects", search_projects)
@@ -98,7 +110,22 @@ def build_research_graph():
         "generate_search_queries",
         route_after_search_query_generation,
     )
-    builder.add_edge("search_researchers", "search_labs")
+    builder.add_conditional_edges(
+    "search_researchers",
+    route_after_researcher_search,
+)
+
+    builder.add_edge(
+    "broaden_search",
+    "generate_search_queries",
+)
+
+    builder.add_edge(
+    "narrow_search",
+    "generate_search_queries",
+)
+
+
     builder.add_edge("search_labs", "search_projects")
     builder.add_edge("search_projects", "search_publications")
     builder.add_edge(
