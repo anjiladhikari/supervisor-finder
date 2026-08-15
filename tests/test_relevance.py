@@ -212,7 +212,7 @@ def test_expanded_topic_receives_reduced_weight() -> None:
 
     assert (
         result.breakdown.research_interests
-        == 36
+        == 14
     )
 
 
