@@ -1,6 +1,8 @@
 from operator import add
 from typing import Annotated, TypedDict
-
+from research_finder.search_strategy import (
+    SearchMode,
+)
 from research_finder.models import (
     SearchRequest,
     SearchResponse,
@@ -88,6 +90,9 @@ class ResearchGraphState(WorkflowMessages, total=False):
     scored_results: list[ScoredResearcherProfile]
     deduplicated_results: list[ScoredResearcherProfile]
     ranked_results: list[RankedResearcherProfile]
+    search_mode: SearchMode
+    search_round: int
+    active_search_topics: list[str]
 
     search_attempt_count: int
     download_attempt_count: int
