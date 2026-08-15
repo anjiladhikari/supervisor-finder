@@ -15,9 +15,6 @@ from research_finder.nodes import (
     rank_results,
     remove_duplicates,
     score_relevance,
-    search_labs,
-    search_projects,
-    search_publications,
     search_researchers,
     validate_input,
     verify_current_affiliation,
@@ -59,9 +56,6 @@ def build_research_graph():
         narrow_search,
     )
     builder.add_node("search_researchers", search_researchers)
-    builder.add_node("search_labs", search_labs)
-    builder.add_node("search_projects", search_projects)
-    builder.add_node("search_publications", search_publications)
     builder.add_node(
         "verify_current_affiliation",
         verify_current_affiliation,
@@ -126,12 +120,7 @@ def build_research_graph():
 )
 
 
-    builder.add_edge("search_labs", "search_projects")
-    builder.add_edge("search_projects", "search_publications")
-    builder.add_edge(
-        "search_publications",
-        "download_webpage_content",
-    )
+
     builder.add_edge(
         "download_webpage_content",
         "extract_researcher_information",

@@ -621,23 +621,11 @@ def download_webpage_content(
     """Download and clean all discovered official pages."""
 
     page_groups = (
-        (
-            "researcher_pages",
-            "researcher_documents",
-        ),
-        (
-            "lab_pages",
-            "lab_documents",
-        ),
-        (
-            "project_pages",
-            "project_documents",
-        ),
-        (
-            "publication_pages",
-            "publication_documents",
-        ),
-    )
+    (
+        "researcher_pages",
+        "researcher_documents",
+    ),
+)
 
     all_pages = [page for page_key, _ in page_groups for page in state.get(page_key, [])]
 
