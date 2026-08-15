@@ -1,5 +1,9 @@
 from pydantic import ValidationError
-
+from research_finder.search_strategy import (
+    SearchMode,
+    build_broadened_search_topics,
+    build_narrowed_search_topics,
+)
 from research_finder.deduplication import (
     deduplicate_by_source_url,
     deduplicate_scored_researchers,
@@ -79,7 +83,12 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
         "scored_results": [],
         "deduplicated_results": [],
         "ranked_results": [],
+        "search_mode": SearchMode.NORMAL,
+        "search_round": 1,
+        "active_search_topics": [],
         "search_attempt_count": 0,
+        "download_attempt_count": 0,
+
         "final_response": None,
         "errors": [],
         "warnings": [],
