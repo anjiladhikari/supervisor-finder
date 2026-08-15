@@ -177,9 +177,14 @@ def execute_official_searches(
             ):
                 return SearchBatchOutcome(
                     pages=tuple(pages),
-                    attempted_queries=query_index,
-                    failed_queries=failed_queries,
-                )
+                    attempted_queries=(
+                        target_queries.index(
+                            search_query
+            )
+            + 1
+        ),
+        failed_queries=failed_queries,
+    )
 
     return SearchBatchOutcome(
         pages=tuple(pages),

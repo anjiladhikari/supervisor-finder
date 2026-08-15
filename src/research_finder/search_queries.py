@@ -92,7 +92,7 @@ class OfficialSearchQuery(StrictModel):
 
 
 _TARGET_CLAUSES = {
-    SearchTarget.RESEARCHER: ("(researcher OR professor OR academic OR staff)"),
+    SearchTarget.RESEARCHER: ("(researcher OR professor OR academic)"),
     SearchTarget.LAB: ('("research group" OR "research lab" OR laboratory)'),
     SearchTarget.PROJECT: ("(project OR grant OR funded)"),
     SearchTarget.PUBLICATION: ("(publication OR paper OR journal)"),

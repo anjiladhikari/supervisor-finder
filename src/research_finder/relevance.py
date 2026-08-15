@@ -171,7 +171,7 @@ def _text_match_score(
 
         # Original user topic receives full weight.
         # Expanded topics receive slightly less weight.
-        topic_weight = 1.0 if index == 0 else 0.9
+        topic_weight = 1.0 if index == 0 else 0.35
 
         weighted_score = coverage * topic_weight
 

@@ -78,6 +78,19 @@ def test_node_generates_queries() -> None:
     )
 
     assert len(result["search_queries"]) == 4
+    assert all(
+        query.topics
+        == ["Reinforcement learning"]
+        for query
+        in result["search_queries"]
+    )
+    assert all(
+        "Time-series classification"
+        not in query.query
+        for query
+        in result["search_queries"]
+    )
+
     assert result["execution_log"] == [
     (
         "Generated 4 official "

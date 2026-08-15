@@ -1,4 +1,3 @@
-from ddgs import http_client
 from pydantic import ValidationError
 
 from research_finder.deduplication import (
@@ -268,16 +267,28 @@ def generate_search_queries(
         [],
     )
 
-    topics = (
+    active_topics = list(
         state.get(
             "active_search_topics",
             [],
         )
-    or state.get(
-        "expanded_topics",
-        [],
     )
-)
+
+    expanded_topics = list(
+        state.get(
+            "expanded_topics",
+            [],
+        )
+    )
+
+    if active_topics:
+        topics = active_topics
+
+    elif search_mode == SearchMode.NORMAL:
+        topics = expanded_topics[:1]
+
+    else:
+        topics = expanded_topics
 
 
 
@@ -419,19 +430,19 @@ def _search_official_pages(
 
     if outcome.failed_queries:
         warnings.append(
-            (
+            
                 f"{label} search failed for "
                 f"{outcome.failed_queries} of "
                 f"{outcome.attempted_queries} queries."
-            )
+            
         )
 
     if not outcome.pages:
         warnings.append(
-            (
+            
                 f"No official {target.value} "
                 "pages were found."
-            )
+            
         )
 
     result: dict[str, object] = {

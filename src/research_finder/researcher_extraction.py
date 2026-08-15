@@ -42,7 +42,7 @@ class ResearcherExtractionDraft(StrictModel):
         min_length=5,
         description=(
             "An exact continuous excerpt copied from the supplied webpage. "
-            "Keep it concise, preferably under 50 words."
+            "Keep it concise, preferably under  short."
         ),
     )
 
