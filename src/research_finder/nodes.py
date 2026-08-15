@@ -247,15 +247,35 @@ def generate_search_queries(
     state: ResearchGraphState,
 ) -> dict[str, object]:
     """Generate official university-domain queries."""
+    search_mode = state.get(
+    "search_mode",
+    SearchMode.NORMAL,
+)
+
+    search_round = state.get(
+    "search_round",
+    1,
+)
 
     universities = state.get(
         "candidate_universities",
         [],
     )
-    topics = state.get(
+
+    topics = (
+        state.get(
+            "active_search_topics",
+            [],
+        )
+    or state.get(
         "expanded_topics",
         [],
     )
+)
+
+
+
+
 
     if not universities:
         return {
@@ -277,10 +297,16 @@ def generate_search_queries(
     )
 
     return {
-        "search_queries": queries,
-        "execution_log": [(f"Generated {len(queries)} official university-domain queries.")],
-    }
-
+    "search_queries": queries,
+    "execution_log": [
+        (
+            f"Generated {len(queries)} "
+            "official university-domain queries "
+            f"for {search_mode.value} search "
+            f"round {search_round}."
+        )
+    ],
+}
 
 _PAGE_STATE_KEYS = {
     SearchTarget.RESEARCHER: "researcher_pages",
