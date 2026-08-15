@@ -78,9 +78,15 @@ def test_node_generates_queries() -> None:
     )
 
     assert len(result["search_queries"]) == 4
+    assert result["execution_log"] == [
+    (
+        "Generated 4 official "
+        "university-domain queries "
+        "for normal search round 1."
+    )
+]
 
-    assert result["execution_log"] == [("Generated 4 official university-domain queries.")]
-
+   
 
 def test_node_requires_universities() -> None:
     result = generate_search_queries(
@@ -95,3 +101,31 @@ def test_node_requires_universities() -> None:
     assert result["errors"] == [
         ("Search queries cannot be generated without candidate universities.")
     ]
+def test_node_uses_active_retry_topics() -> None:
+    result = generate_search_queries(
+        {
+            "candidate_universities": [
+                create_test_university()
+            ],
+            "expanded_topics": [
+                "Reinforcement learning",
+                "Machine learning",
+            ],
+            "active_search_topics": [
+                "Exact specialised topic"
+            ],
+            "search_mode": "narrow",
+            "search_round": 2,
+        }
+    )
+
+    assert len(
+        result["search_queries"]
+    ) == 4
+
+    assert all(
+        query.topics
+        == ["Exact specialised topic"]
+        for query
+        in result["search_queries"]
+    )
