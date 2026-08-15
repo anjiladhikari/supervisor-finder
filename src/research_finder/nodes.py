@@ -9,7 +9,7 @@ from research_finder.location import (
     LocationLookupError,
     resolve_location,
 )
-from research_finder.models import SearchRequest, SearchResponse
+from research_finder.models import SearchRequest
 from research_finder.official_page_search import (
     execute_official_searches,
 )
@@ -23,6 +23,7 @@ from research_finder.research_profile import (
     organise_verified_researchers,
 )
 from research_finder.researcher_details import (
+    ResearchEvidenceItem,
     enrich_researcher_candidates,
     extract_researcher_detail_documents,
 )
@@ -1180,4 +1181,16 @@ def generate_final_output(
     return {
         "final_response": response,
         "execution_log": ["Final response generated."],
+    }
+
+
+def _evidence_item_to_output(
+    item: ResearchEvidenceItem,
+) -> dict[str, object]:
+    """Convert one verified evidence item for the UI."""
+
+    return {
+        "name": item.name,
+        "url": str(item.source_url),
+        "year": item.publication_year,
     }
