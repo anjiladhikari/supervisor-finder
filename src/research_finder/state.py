@@ -1,17 +1,16 @@
 from operator import add
 from typing import Annotated, TypedDict
 
-from research_finder.ranking import (
-    RankedResearcherProfile,
-)
 from research_finder.models import (
-    ResearcherResult,
     SearchRequest,
     SearchResponse,
     TopicExpansion,
 )
 from research_finder.official_page_search import (
     OfficialSearchPage,
+)
+from research_finder.ranking import (
+    RankedResearcherProfile,
 )
 from research_finder.relevance import (
     ScoredResearcherProfile,
