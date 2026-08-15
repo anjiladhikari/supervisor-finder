@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import time
 from typing import Any
 
 import streamlit as st
@@ -610,6 +610,7 @@ if submitted:
         )
 
         try:
+            start_time = time.perf_counter()
             with st.spinner(
                 
                     "Searching official "
@@ -623,6 +624,11 @@ if submitted:
                         ),
                     }
                 )
+
+            elapsed_seconds = (time.perf_counter() - start_time)
+            
+
+          
 
         except Exception:
             st.error(
@@ -639,6 +645,9 @@ if submitted:
             ] = output.get(
                 "final_response"
             )
+            st.session_state[
+                "search_elapsed_seconds"
+            ] = elapsed_seconds
 
 
 response = st.session_state.get(
@@ -646,6 +655,30 @@ response = st.session_state.get(
 )
 
 if response is not None:
+    elapsed_seconds = st.session_state.get(
+        "search_elapsed_seconds"
+    )
+
+    if elapsed_seconds is not None:
+        if elapsed_seconds >= 60:
+            minutes = int(
+                elapsed_seconds // 60
+            )
+
+            seconds = int(
+                elapsed_seconds % 60
+            )
+
+            st.info(
+                f"Search time: "
+                f"{minutes}m {seconds}s"
+            )
+        else:
+            st.info(
+                f"Search time: "
+                f"{elapsed_seconds:.1f}s"
+            )
+
     _render_response(
         response
     )
