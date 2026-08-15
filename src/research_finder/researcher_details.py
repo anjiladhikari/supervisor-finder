@@ -58,7 +58,6 @@ class ResearcherDetailBatch(StrictModel):
 
     details: list[ResearcherDetailDraft] = Field(
         default_factory=list,
-        max_length=50,
     )
 
 

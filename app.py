@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import streamlit as st
 
 from research_finder.graph import graph
@@ -25,13 +27,459 @@ st.set_page_config(
 )
 
 
+def _render_evidence_items(
+    title: str,
+    items: list[dict[str, Any]],
+) -> None:
+    """Render project, lab or publication links."""
+
+    if not items:
+        return
+
+    st.markdown(f"**{title}**")
+
+    for item in items:
+        name = item.get(
+            "name",
+            "Official source",
+        )
+
+        url = item.get(
+            "url"
+        )
+
+        year = item.get(
+            "year"
+        )
+
+        label = (
+            f"{name} ({year})"
+            if year
+            else str(name)
+        )
+
+        if url:
+            st.markdown(
+                f"- [{label}]({url})"
+            )
+        else:
+            st.markdown(
+                f"- {label}"
+            )
+
+
+def _render_researcher_card(
+    researcher: dict[str, Any],
+) -> None:
+    """Render one ranked researcher."""
+
+    rank = researcher.get(
+        "rank",
+        "-",
+    )
+
+    name = researcher.get(
+        "researcher_name",
+        "Unknown researcher",
+    )
+
+    university = researcher.get(
+        "university_name",
+        "Unknown university",
+    )
+
+    academic_title = researcher.get(
+        "academic_title"
+    )
+
+    role = researcher.get(
+        "role"
+    )
+
+    score = int(
+        researcher.get(
+            "relevance_score",
+            0,
+        )
+    )
+
+    with st.container(
+        border=True,
+    ):
+        header_col, score_col = (
+            st.columns(
+                [4, 1]
+            )
+        )
+
+        with header_col:
+            st.subheader(
+                f"#{rank} {name}"
+            )
+
+            identity_parts = [
+                part
+                for part in [
+                    academic_title,
+                    role,
+                    university,
+                ]
+                if part
+            ]
+
+            if identity_parts:
+                st.caption(
+                    " • ".join(
+                        identity_parts
+                    )
+                )
+
+            if researcher.get(
+                "verified"
+            ):
+                st.success(
+                    (
+                        "Verified using official "
+                        "university evidence."
+                    ),
+                    icon=":material/verified:",
+                )
+
+        with score_col:
+            st.metric(
+                "Relevance",
+                f"{score}/100",
+                border=True,
+            )
+
+            st.progress(
+                min(
+                    max(
+                        score / 100,
+                        0.0,
+                    ),
+                    1.0,
+                )
+            )
+
+        interests = researcher.get(
+            "research_interests",
+            [],
+        )
+
+        if interests:
+            st.markdown(
+                "**Research interests**"
+            )
+
+            st.write(
+                " • ".join(
+                    interests
+                )
+            )
+
+        summary = researcher.get(
+            "profile_summary"
+        )
+
+        if summary:
+            st.markdown(
+                "**Profile summary**"
+            )
+
+            st.write(
+                summary
+            )
+
+        st.divider()
+
+        left_col, right_col = (
+            st.columns(
+                [2, 1]
+            )
+        )
+
+        with left_col:
+            _render_evidence_items(
+                "Current projects",
+                researcher.get(
+                    "current_projects",
+                    [],
+                ),
+            )
+
+            _render_evidence_items(
+                "Previous projects",
+                researcher.get(
+                    "previous_projects",
+                    [],
+                ),
+            )
+
+            _render_evidence_items(
+                (
+                    "Projects with "
+                    "unknown status"
+                ),
+                researcher.get(
+                    "unknown_projects",
+                    [],
+                ),
+            )
+
+            _render_evidence_items(
+                "Publications",
+                researcher.get(
+                    "publications",
+                    [],
+                ),
+            )
+
+            _render_evidence_items(
+                "Labs and research groups",
+                researcher.get(
+                    "labs",
+                    [],
+                ),
+            )
+
+        with right_col:
+            st.markdown(
+                "**Contact & sources**"
+            )
+
+            public_email = researcher.get(
+                "public_email"
+            )
+
+            if public_email:
+                st.markdown(
+                    
+                        "**University email**  \n"
+                        f"`{public_email}`"
+                    
+                )
+            else:
+                st.caption(
+                    
+                        "No verified public "
+                        "university email found."
+                    
+                )
+
+            profile_url = researcher.get(
+                "official_profile_url"
+            )
+
+            if profile_url:
+                st.link_button(
+                    "Official university profile",
+                    profile_url,
+                    icon=(
+                        ":material/"
+                        "open_in_new:"
+                    ),
+                    width="stretch",
+                )
+
+        explanations = researcher.get(
+            "match_explanation",
+            [],
+        )
+
+        matched_terms = researcher.get(
+            "matched_terms",
+            [],
+        )
+
+        if (
+            explanations
+            or matched_terms
+        ):
+            with st.expander(
+                "Why this researcher matched"
+            ):
+                if matched_terms:
+                    st.markdown(
+                        "**Matched terms**"
+                    )
+
+                    st.write(
+                        ", ".join(
+                            matched_terms
+                        )
+                    )
+
+                if explanations:
+                    st.markdown(
+                        "**Score explanation**"
+                    )
+
+                    for explanation in (
+                        explanations
+                    ):
+                        st.write(
+                            f"- {explanation}"
+                        )
+
+                breakdown = researcher.get(
+                    "score_breakdown",
+                    {},
+                )
+
+                if breakdown:
+                    st.markdown(
+                        "**Score breakdown**"
+                    )
+
+                    score_labels = {
+                        "research_interests": (
+                            "Research interests"
+                        ),
+                        "current_projects": (
+                            "Current projects"
+                        ),
+                        "publications": (
+                            "Publications"
+                        ),
+                        "labs": (
+                            "Labs/groups"
+                        ),
+                        "previous_projects": (
+                            "Previous projects"
+                        ),
+                        "unknown_projects": (
+                            "Unknown-status projects"
+                        ),
+                    }
+
+                    for key, label in (
+                        score_labels.items()
+                    ):
+                        points = (
+                            breakdown.get(
+                                key,
+                                0,
+                            )
+                        )
+
+                        st.write(
+                            f"- {label}: "
+                            f"{points} points"
+                        )
+
+        verified_at = researcher.get(
+            "verified_at"
+        )
+
+        if verified_at:
+            with st.expander(
+                "Verification details"
+            ):
+                st.caption(
+                    
+                        "Verification timestamp: "
+                        f"{verified_at}"
+                    
+                )
+
+
+def _render_response(
+    response: dict[str, Any],
+) -> None:
+    """Render the complete workflow response."""
+
+    results = response.get(
+        "results",
+        [],
+    )
+
+    result_count = response.get(
+        "result_count",
+        len(results),
+    )
+
+    errors = response.get(
+        "errors",
+        [],
+    )
+
+    warnings = response.get(
+        "warnings",
+        [],
+    )
+
+    if errors:
+        st.error(
+            "The workflow completed with errors."
+        )
+
+        with st.expander(
+            "Errors",
+        ):
+            for error in errors:
+                st.write(
+                    f"- {error}"
+                )
+
+    if not results:
+        st.info(
+            
+                "Search completed, but no "
+                "strong matching researchers "
+                "were found."
+            
+        )
+
+        if warnings:
+            with st.expander(
+                "Search details"
+            ):
+                for warning in warnings:
+                    st.write(
+                        f"- {warning}"
+                    )
+
+        return
+
+    st.success(
+        
+            f"Search complete — "
+            f"{result_count} researcher"
+            f"{'s' if result_count != 1 else ''} "
+            "found."
+        
+    )
+
+    st.subheader(
+        "Strongest matches"
+    )
+
+    for researcher in results:
+        _render_researcher_card(
+            researcher
+        )
+
+    if warnings:
+        with st.expander(
+            "Search warnings"
+        ):
+            for warning in warnings:
+                st.write(
+                    f"- {warning}"
+                )
+
+
 st.title(
     "Research Supervisor & Lab Finder"
 )
 
 st.write(
-    "Find Australian university researchers, labs, "
-    "projects and publications related to your research topic."
+    
+        "Find Australian university researchers, "
+        "labs, projects and publications related "
+        "to your research topic."
+    
 )
 
 st.caption(
@@ -56,16 +504,21 @@ with st.container(
         with location_col:
             country = st.selectbox(
                 "Country",
-                options=["Australia"],
+                options=[
+                    "Australia"
+                ],
                 disabled=True,
             )
 
             state = st.selectbox(
                 "State or territory",
-                options=AUSTRALIAN_STATES,
+                options=(
+                    AUSTRALIAN_STATES
+                ),
                 help=(
-                    "Choose All Australia to "
-                    "search every supported university."
+                    "Choose All Australia "
+                    "to search every "
+                    "supported university."
                 ),
             )
 
@@ -78,31 +531,38 @@ with st.container(
                     value=5,
                     step=1,
                     help=(
-                        "Only the strongest matching "
-                        "researchers will be returned."
+                        "Only the strongest "
+                        "matching researchers "
+                        "will be returned."
                     ),
                 )
             )
 
-        research_topic = st.text_area(
-            "Research topic",
-            placeholder=(
-                "Example: Reinforcement learning "
-                "for early time-series classification"
-            ),
-            height=120,
-            max_chars=300,
-            help=(
-                "Describe the research area you want "
-                "to find researchers for."
-            ),
+        research_topic = (
+            st.text_area(
+                "Research topic",
+                placeholder=(
+                    "Example: Reinforcement "
+                    "learning for early "
+                    "time-series classification"
+                ),
+                height=120,
+                max_chars=300,
+                help=(
+                    "Describe the research "
+                    "area you want to find "
+                    "researchers for."
+                ),
+            )
         )
 
         submitted = (
             st.form_submit_button(
                 "Find researchers",
                 type="primary",
-                icon=":material/search:",
+                icon=(
+                    ":material/search:"
+                ),
                 width="stretch",
             )
         )
@@ -115,21 +575,26 @@ if submitted:
 
     if len(cleaned_topic) < 3:
         st.error(
-            "Please enter a research topic "
-            "with at least 3 characters."
+            
+                "Please enter a research topic "
+                "with at least 3 characters."
+            
         )
 
     else:
         selected_state = (
             None
-            if state == "All Australia"
+            if state
+            == "All Australia"
             else state
         )
 
         request = {
             "country": country,
             "state": selected_state,
-            "research_topic": cleaned_topic,
+            "research_topic": (
+                cleaned_topic
+            ),
             "max_results": int(
                 max_results
             ),
@@ -146,18 +611,26 @@ if submitted:
 
         try:
             with st.spinner(
-                "Searching official university sources..."
+                
+                    "Searching official "
+                    "university sources..."
+                
             ):
                 output = graph.invoke(
                     {
-                        "raw_request": request,
+                        "raw_request": (
+                            request
+                        ),
                     }
                 )
 
         except Exception:
             st.error(
-                "The search could not be completed. "
-                "Please try again."
+                
+                    "The search could not "
+                    "be completed. "
+                    "Please try again."
+                
             )
 
         else:
@@ -173,35 +646,16 @@ response = st.session_state.get(
 )
 
 if response is not None:
-    result_count = response.get(
-        "result_count",
-        0,
+    _render_response(
+        response
     )
-
-    if result_count:
-        st.success(
-            
-                f"Search complete — "
-                f"{result_count} researcher"
-                f"{'s' if result_count != 1 else ''} found."
-            
-        )
-
-    else:
-        st.info(
-            "Search completed, but no matching "
-            "researchers were found."
-        )
-
-    with st.expander(
-        "Workflow result",
-    ):
-        st.json(response)
 
 
 st.divider()
 
 st.caption(
-    "Research Supervisor & Lab Finder • "
-    "Built with LangGraph and Streamlit"
+    
+        "Research Supervisor & Lab Finder • "
+        "Built with LangGraph and Streamlit"
+    
 )

@@ -42,7 +42,7 @@ class ResearcherExtractionDraft(StrictModel):
         min_length=5,
         description=(
             "An exact continuous excerpt copied from the supplied webpage. "
-            "Keep it concise, preferably under  short."
+            "Keep it concise, preferably under 50 words."
         ),
     )
 
@@ -50,9 +50,7 @@ class ResearcherExtractionDraft(StrictModel):
 class ResearcherExtractionBatch(StrictModel):
     """Researchers extracted from one webpage."""
 
-    researchers: list[ResearcherExtractionDraft] = Field(
-        max_length=20,
-    )
+    researchers: list[ResearcherExtractionDraft] 
 
 
 class ResearcherCandidate(StrictModel):
