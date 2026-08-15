@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import streamlit as st
@@ -321,7 +320,6 @@ def _render_researcher_card(
                     f"Verified at: "
                     f"{verified_at}"
                 )
-
             else:
                 st.write(
                     "Verification timestamp "
@@ -349,8 +347,7 @@ def _render_response(
 
     if errors:
         st.error(
-            "The search completed with "
-            "errors."
+            "The search completed with errors."
         )
 
         with st.expander(
@@ -363,9 +360,8 @@ def _render_response(
 
     if not results:
         st.info(
-            "Search completed, but no "
-            "strong matching researchers "
-            "were found."
+            "Search completed, but no strong "
+            "matching researchers were found."
         )
 
         if warnings:
@@ -380,9 +376,10 @@ def _render_response(
         return
 
     st.success(
-        f"Found {len(results)} "
-        f"researcher"
-        f"{'s' if len(results) != 1 else ''}."
+        f"Search complete — "
+        f"{len(results)} researcher"
+        f"{'s' if len(results) != 1 else ''} "
+        f"found."
     )
 
     st.header(
@@ -406,8 +403,7 @@ def _render_response(
 
 st.set_page_config(
     page_title=(
-        "Research Supervisor "
-        "and Lab Finder"
+        "Research Supervisor & Lab Finder"
     ),
     page_icon="🔎",
     layout="wide",
@@ -415,52 +411,62 @@ st.set_page_config(
 
 
 st.title(
-    "Research Supervisor "
-    "and Lab Finder"
+    "Research Supervisor & Lab Finder"
 )
 
 st.write(
-    "Find Australian university "
-    "researchers related to your "
-    "research topic using official "
-    "university evidence."
+    "Find Australian university researchers, "
+    "labs, projects and publications related "
+    "to your research topic."
+)
+
+st.caption(
+    "Results are based on official "
+    "university sources."
 )
 
 
-with st.form(
-    "research_search_form"
-):
-    country = st.text_input(
-        "Country",
-        value="Australia",
-        disabled=True,
+with st.container(border=True):
+    st.header(
+        "Find researchers"
     )
 
-    state = st.selectbox(
-        "State",
-        AUSTRALIAN_STATES,
-        index=6,
-    )
+    with st.form(
+        "research_search_form"
+    ):
+        country = st.text_input(
+            "Country",
+            value="Australia",
+            disabled=True,
+        )
 
-    research_topic = st.text_input(
-        "Research topic",
-        placeholder=(
-            "e.g. Reinforcement learning"
-        ),
-    )
+        state = st.selectbox(
+            "State",
+            AUSTRALIAN_STATES,
+            index=6,
+        )
 
-    max_results = st.number_input(
-        "Maximum results",
-        min_value=1,
-        max_value=20,
-        value=3,
-        step=1,
-    )
+        research_topic = st.text_input(
+            "Research topic",
+            placeholder=(
+                "e.g. Reinforcement learning"
+            ),
+        )
 
-    submitted = st.form_submit_button(
-        "Search researchers",
-        type="primary",
-    )
+        max_results = st.number_input(
+            "Maximum results",
+            min_value=1,
+            max_value=20,
+            value=3,
+            step=1,
+        )
+
+        submitted = (
+            st.form_submit_button(
+                "Search researchers",
+                type="primary",
+            )
+        )
 
 
 if submitted:
@@ -495,36 +501,19 @@ if submitted:
             "search_elapsed_seconds"
         ] = None
 
-        timer = st.empty()
-
-        start_time = (
-            time.perf_counter()
-        )
+        start_time = time.perf_counter()
 
         try:
-            with ThreadPoolExecutor(
-                max_workers=1
-            ) as executor:
-                future = executor.submit(
-                    graph.invoke,
+            with st.spinner(
+                "Searching official "
+                "university sources...",
+                show_time=True,
+            ):
+                output = graph.invoke(
                     {
                         "raw_request": request,
-                    },
+                    }
                 )
-
-                while not future.done():
-                    elapsed = int(
-                        time.perf_counter()
-                        - start_time
-                    )
-
-                    timer.markdown(
-                        f"### {elapsed}s"
-                    )
-
-                    time.sleep(1)
-
-                output = future.result()
 
             elapsed_seconds = (
                 time.perf_counter()
@@ -532,8 +521,6 @@ if submitted:
             )
 
         except Exception as exc:
-            timer.empty()
-
             st.error(
                 "Search failed."
             )
@@ -553,11 +540,6 @@ if submitted:
                 "search_elapsed_seconds"
             ] = elapsed_seconds
 
-            timer.success(
-                f"Completed in "
-                f"{elapsed_seconds:.1f}s"
-            )
-
 
 response = st.session_state.get(
     "search_result"
@@ -570,14 +552,26 @@ if response is not None:
         )
     )
 
-    if (
-        elapsed_seconds is not None
-        and not submitted
-    ):
-        st.caption(
-            f"Search time: "
-            f"{elapsed_seconds:.1f}s"
-        )
+    if elapsed_seconds is not None:
+        if elapsed_seconds >= 60:
+            minutes = int(
+                elapsed_seconds // 60
+            )
+
+            seconds = int(
+                elapsed_seconds % 60
+            )
+
+            st.caption(
+                f"Search completed in "
+                f"{minutes}m {seconds}s"
+            )
+
+        else:
+            st.caption(
+                f"Search completed in "
+                f"{elapsed_seconds:.1f}s"
+            )
 
     _render_response(
         response
