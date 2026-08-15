@@ -14,6 +14,7 @@ from research_finder.official_page_search import (
     execute_official_searches,
 )
 from research_finder.ranking import (
+    RankedResearcherProfile,
     rank_researcher_results,
 )
 from research_finder.relevance import (
@@ -1150,6 +1151,118 @@ def rank_results(
 
     return response
 
+def _ranked_result_to_output(
+    ranked: RankedResearcherProfile,
+) -> dict[str, object]:
+    """Flatten one ranked researcher for the website."""
+
+    scored = ranked.result
+    profile = scored.profile
+
+    verified = (
+        profile.verified_researcher
+    )
+
+    candidate = verified.candidate
+    researcher = candidate.researcher
+
+    return {
+        "rank": ranked.rank,
+
+        "researcher_name": (
+            researcher.full_name
+        ),
+
+        "university_name": (
+            researcher.university_name
+        ),
+
+        "academic_title": (
+            researcher.academic_title
+        ),
+
+        "role": researcher.role,
+
+        "profile_summary": (
+            researcher.profile_summary
+        ),
+
+        "research_interests": list(
+            profile.research_interests
+        ),
+
+        "labs": [
+            _evidence_item_to_output(
+                item
+            )
+            for item in candidate.labs
+        ],
+
+        "current_projects": [
+            _evidence_item_to_output(
+                item
+            )
+            for item
+            in profile.current_projects
+        ],
+
+        "previous_projects": [
+            _evidence_item_to_output(
+                item
+            )
+            for item
+            in profile.previous_projects
+        ],
+
+        "unknown_projects": [
+            _evidence_item_to_output(
+                item
+            )
+            for item
+            in profile.unknown_projects
+        ],
+
+        "publications": [
+            _evidence_item_to_output(
+                item
+            )
+            for item
+            in candidate.publications
+        ],
+
+        "relevance_score": (
+            scored.relevance_score
+        ),
+
+        "score_breakdown": (
+            scored.breakdown.model_dump()
+        ),
+
+        "matched_terms": list(
+            scored.matched_terms
+        ),
+
+        "match_explanation": list(
+            scored.match_explanation
+        ),
+
+        "official_profile_url": str(
+            researcher.source_url
+        ),
+
+        "public_email": (
+            str(candidate.public_email)
+            if candidate.public_email
+            is not None
+            else None
+        ),
+
+        "verified": True,
+
+        "verified_at": (
+            verified.verified_at.isoformat()
+        ),
+    }
 
 def generate_final_output(
     state: ResearchGraphState,
