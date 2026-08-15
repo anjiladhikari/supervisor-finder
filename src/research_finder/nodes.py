@@ -387,6 +387,120 @@ def _search_official_pages(
     return result
 
 
+def broaden_search(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Prepare one broader researcher-search retry."""
+
+    request = state.get(
+        "request"
+    )
+
+    if request is None:
+        return {
+            "errors": [
+                (
+                    "Broaden search requires "
+                    "a validated search request."
+                )
+            ],
+            "execution_log": [
+                "Broaden search preparation failed."
+            ],
+        }
+
+    current_round = state.get(
+        "search_round",
+        1,
+    )
+
+    topics = build_broadened_search_topics(
+        original_topic=(
+            request.research_topic
+        ),
+        topic_expansion=state.get(
+            "topic_expansion"
+        ),
+        expanded_topics=list(
+            state.get(
+                "expanded_topics",
+                [],
+            )
+        ),
+    )
+
+    next_round = (
+        current_round + 1
+    )
+
+    return {
+        "search_mode": SearchMode.BROADEN,
+        "search_round": next_round,
+        "active_search_topics": topics,
+        "search_queries": [],
+        "researcher_pages": [],
+        "execution_log": [
+            (
+                "Search retry prepared: "
+                f"round {next_round} using "
+                "broaden mode."
+            )
+        ],
+    }
+
+
+def narrow_search(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Prepare one narrower researcher-search retry."""
+
+    request = state.get(
+        "request"
+    )
+
+    if request is None:
+        return {
+            "errors": [
+                (
+                    "Narrow search requires "
+                    "a validated search request."
+                )
+            ],
+            "execution_log": [
+                "Narrow search preparation failed."
+            ],
+        }
+
+    current_round = state.get(
+        "search_round",
+        1,
+    )
+
+    topics = build_narrowed_search_topics(
+        original_topic=(
+            request.research_topic
+        ),
+    )
+
+    next_round = (
+        current_round + 1
+    )
+
+    return {
+        "search_mode": SearchMode.NARROW,
+        "search_round": next_round,
+        "active_search_topics": topics,
+        "search_queries": [],
+        "researcher_pages": [],
+        "execution_log": [
+            (
+                "Search retry prepared: "
+                f"round {next_round} using "
+                "narrow mode."
+            )
+        ],
+    }
+
 def search_researchers(
     state: ResearchGraphState,
 ) -> dict[str, object]:
