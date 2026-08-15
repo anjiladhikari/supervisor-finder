@@ -328,6 +328,9 @@ _PAGE_LABELS = {
 }
 
 
+
+
+
 def _search_official_pages(
     state: ResearchGraphState,
     target: SearchTarget,
@@ -338,9 +341,32 @@ def _search_official_pages(
         "search_queries",
         [],
     )
+
+    # First select queries for this target.
     target_queries = [
-        search_query for search_query in search_queries if search_query.target == target
+        search_query
+        for search_query in search_queries
+        if search_query.target == target
     ]
+
+    # Speed optimisation:
+    # after researcher search, only search labs/projects/publications
+    # for universities where a researcher page was found.
+    if target != SearchTarget.RESEARCHER:
+        researcher_universities = {
+            page.university_name
+            for page in state.get(
+                "researcher_pages",
+                [],
+            )
+        }
+
+        target_queries = [
+            search_query
+            for search_query in target_queries
+            if search_query.university_name
+            in researcher_universities
+        ]
 
     state_key = _PAGE_STATE_KEYS[target]
     label = _PAGE_LABELS[target]
@@ -348,8 +374,15 @@ def _search_official_pages(
     if not target_queries:
         return {
             state_key: [],
-            "errors": [(f"No {target.value} search queries were available.")],
-            "execution_log": [f"{label} search failed."],
+            "errors": [
+                (
+                    f"No {target.value} search "
+                    "queries were available."
+                )
+            ],
+            "execution_log": [
+                f"{label} search failed."
+            ],
         }
 
     client = create_search_client()
@@ -358,30 +391,46 @@ def _search_official_pages(
         search_queries=target_queries,
         target=target,
         client=client,
-        max_results_per_query=3,
+        max_results_per_query=1,
     )
 
     warnings: list[str] = []
 
     if outcome.failed_queries:
         warnings.append(
-            f"{label} search failed for "
-            f"{outcome.failed_queries} of "
-            f"{outcome.attempted_queries} queries."
+            (
+                f"{label} search failed for "
+                f"{outcome.failed_queries} of "
+                f"{outcome.attempted_queries} queries."
+            )
         )
 
     if not outcome.pages:
-        warnings.append(f"No official {target.value} pages were found.")
+        warnings.append(
+            (
+                f"No official {target.value} "
+                "pages were found."
+            )
+        )
 
     result: dict[str, object] = {
-        state_key: list(outcome.pages),
-        "search_attempt_count": (state.get("search_attempt_count", 0) + outcome.attempted_queries),
+        state_key: list(
+            outcome.pages
+        ),
+        "search_attempt_count": (
+            state.get(
+                "search_attempt_count",
+                0,
+            )
+            + outcome.attempted_queries
+        ),
         "execution_log": [
             (
                 f"{label} search completed: "
                 f"{outcome.attempted_queries} queries "
-                f"attempted, {len(outcome.pages)} "
-                "official pages found."
+                f"attempted, "
+                f"{len(outcome.pages)} official "
+                "pages found."
             )
         ],
     }
@@ -701,6 +750,10 @@ def extract_researcher_details(
             [],
         )
     )
+    candidate_domains = {
+    candidate.official_domain.casefold()
+    for candidate in candidates
+}
 
     if not candidates:
         return {
@@ -716,6 +769,8 @@ def extract_researcher_details(
         }
 
     documents = [
+     document
+    for document in [
         *state.get(
             "researcher_documents",
             [],
@@ -733,6 +788,9 @@ def extract_researcher_details(
             [],
         ),
     ]
+    if document.official_domain.casefold()
+    in candidate_domains
+]
 
     if not documents:
         enriched = enrich_researcher_candidates(
@@ -1336,8 +1394,6 @@ def generate_final_output(
             "Final response generated."
         ],
     }
-
-
 def _evidence_item_to_output(
     item: ResearchEvidenceItem,
 ) -> dict[str, object]:
