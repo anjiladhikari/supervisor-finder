@@ -43,22 +43,22 @@ def create_batch(
     evidence_text: str,
 ) -> ResearcherExtractionBatch:
     """Create one controlled structured response."""
-
     return ResearcherExtractionBatch(
+        is_researcher_profile=True,
         researchers=[
             ResearcherExtractionDraft(
                 full_name="Jane Smith",
                 academic_title="Professor",
-                role=("Professor of Artificial Intelligence"),
+                role="Professor of Artificial Intelligence",
                 research_interests=[
                     "Reinforcement learning",
-                    "Time-series analysis",
-                ],
-                profile_summary=("Researcher in artificial intelligence."),
-                evidence_text=evidence_text,
-            )
-        ]
-    )
+                "Time-series analysis",
+            ],
+            profile_summary="Researcher in artificial intelligence.",
+            evidence_text=evidence_text,
+        )
+    ],
+)
 
 
 class FakeStructuredModel:

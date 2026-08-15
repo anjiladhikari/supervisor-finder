@@ -46,11 +46,11 @@ class ResearcherExtractionDraft(StrictModel):
         ),
     )
 
-
 class ResearcherExtractionBatch(StrictModel):
-    """Researchers extracted from one webpage."""
+    """Researcher extracted from one personal university profile page."""
 
-    researchers: list[ResearcherExtractionDraft] 
+    is_researcher_profile: bool
+    researchers: list[ResearcherExtractionDraft]
 
 
 class ResearcherCandidate(StrictModel):
@@ -106,23 +106,48 @@ class ResearcherExtractionOutcome:
 
 
 _RESEARCHER_EXTRACTION_SYSTEM_PROMPT = """
-Extract academic researchers from official university webpage text.
+Determine whether the supplied official university webpage is a PERSONAL
+RESEARCHER PROFILE PAGE.
+
+A valid researcher profile page is mainly about one academic or researcher
+and contains information such as their name, academic role, biography,
+research interests, expertise, or research areas.
+
+Reject pages whose main purpose is:
+- a publication or paper
+- a publication list
+- a project page
+- a research group or lab page
+- a staff directory or researcher search-results page
+- a news page
+- an event page
+- a student profile
+- an author list
 
 Rules:
 
-1. Include only explicitly named academic or research staff.
-2. Include professors, lecturers, research fellows and research academics.
-3. Exclude students, administrative staff and unrelated people.
-4. Do not invent names, roles, titles or research interests.
-5. Use only information explicitly present in the supplied content.
-6. If the page contains no researcher information, return an empty list.
-7. evidence_text must be an exact continuous excerpt copied from the page.
-   Keep evidence_text concise,
-   Include only enough text to prove the researcher's identity, role,
-   affiliation and relevant research interests.
-8. Keep research interests short and specific.
-9. Do not extract projects, publications, laboratories or email addresses.
-10. Do not treat names in navigation menus or unrelated lists as researchers.
+1. If this is NOT a personal researcher profile page:
+   - is_researcher_profile = false
+   - researchers = []
+
+2. If this IS a personal researcher profile page:
+   - is_researcher_profile = true
+   - extract ONLY the person whose profile the page belongs to
+   - never extract co-authors, collaborators or other people mentioned
+
+3. Include only academic or research staff.
+
+4. Do not invent names, titles, roles, research interests or summaries.
+
+5. Research interests must come from information explicitly present on
+   the profile page.
+
+6. evidence_text must be an exact continuous excerpt from the supplied page
+   proving the researcher's identity and research information.
+
+7. Keep research interests short and specific.
+
+8. Do not extract projects, publications, labs or email addresses here.
 """.strip()
 
 
@@ -181,13 +206,15 @@ def extract_researchers_from_document(
         batch = raw_response
     else:
         batch = ResearcherExtractionBatch.model_validate(raw_response)
+    if not batch.is_researcher_profile:
+        return []
 
     normalised_content = _normalise_for_matching(document.content)
 
     candidates: list[ResearcherCandidate] = []
     seen_names: set[str] = set()
 
-    for researcher in batch.researchers:
+    for researcher in batch.researchers[:1]:
         evidence_key = _normalise_for_matching(researcher.evidence_text)
 
         if evidence_key not in normalised_content:
