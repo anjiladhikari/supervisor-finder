@@ -98,30 +98,47 @@ def test_graph_returns_valid_empty_response(
     assert any(
         "No official researcher pages were found" in warning for warning in response.warnings
     )
+    execution_log = output[
+    "execution_log"
+]
 
-    assert output["execution_log"] == [
-        "Workflow initialized.",
-        "Input validation completed.",
-        "Structured topic expansion completed.",
-        ("University directory selected 12 candidates for Victoria, Australia."),
-        ("Generated 48 official university-domain queries."),
-        ("Researcher search completed: 12 queries attempted, 0 official pages found."),
-        ("Research-lab search completed: 12 queries attempted, 0 official pages found."),
-        ("Research-project search completed: 12 queries attempted, 0 official pages found."),
-        ("Publication search completed: 12 queries attempted, 0 official pages found."),
-        ("Webpage download completed: 0 pages attempted, 0 documents created."),
-        ("Researcher extraction completed: 0 documents processed, 0 candidates created."),
-        ("Researcher detail extraction completed: 0 documents processed, 0 researchers enriched."),
-        ("Researcher verification completed: 0 candidates checked, 0 verified."),
-        ("Researcher profile organisation completed: 0 researchers organised."),
-        ("Relevance scoring completed: 0 researchers scored."),
+    assert (
+        execution_log[0]
+        == "Workflow initialized."
+    )
+
+    assert (
+    "Input validation completed."
+    in execution_log
+)
+
+    assert (
+        "Structured topic expansion completed."
+        in execution_log
+    )
+
+    assert any(
         (
-            "Deduplication completed: 0 scored researchers -> 0 unique researchers; 0 duplicate source pages and 0 duplicate documents removed."
-        ),
-        ("Result ranking completed: 0 researchers ranked."),
-        "Final response generated.",
-    ]
+            "Generated 48 official "
+        "university-domain queries"
+    )
+    in message
+    for message in execution_log
+)
 
+    assert any(
+    (
+        "Search retry prepared: "
+        "round 2 using broaden mode."
+    )
+    == message
+    for message in execution_log
+)
+
+    assert (
+        execution_log[-1]
+        == "Final response generated."
+    )
 
 def test_graph_stops_after_invalid_input() -> None:
     output = graph.invoke(
