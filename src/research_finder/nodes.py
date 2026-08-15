@@ -248,15 +248,17 @@ def generate_search_queries(
     state: ResearchGraphState,
 ) -> dict[str, object]:
     """Generate official university-domain queries."""
-    search_mode = state.get(
-    "search_mode",
-    SearchMode.NORMAL,
-)
+    search_mode = SearchMode(
+        state.get(
+            "search_mode",
+            SearchMode.NORMAL,
+        )
+    )
 
     search_round = state.get(
-    "search_round",
-    1,
-)
+        "search_round",
+        1,
+    )
 
     universities = state.get(
         "candidate_universities",
