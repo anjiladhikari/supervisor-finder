@@ -124,6 +124,7 @@ def execute_official_searches(
     target: SearchTarget,
     client: WebSearchClient,
     max_results_per_query: int = 3,
+    max_pages: int | None = None,
 ) -> SearchBatchOutcome:
     """Execute one target's official-domain queries."""
 
@@ -135,7 +136,7 @@ def execute_official_searches(
     seen_urls: set[str] = set()
     failed_queries = 0
 
-    for search_query in target_queries:
+    for query_index, search_query in enumerate( target_queries, start=1, ):
         try:
             results = client.search(
                 WebSearchRequest(
@@ -169,6 +170,16 @@ def execute_official_searches(
 
             seen_urls.add(url_key)
             pages.append(page)
+
+            if (
+                max_pages is not None
+                and len(pages) >= max_pages
+            ):
+                return SearchBatchOutcome(
+                    pages=tuple(pages),
+                    attempted_queries=query_index,
+                    failed_queries=failed_queries,
+                )
 
     return SearchBatchOutcome(
         pages=tuple(pages),
