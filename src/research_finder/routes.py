@@ -25,7 +25,7 @@ def route_after_researcher_search(
 ) -> Literal[
     "broaden_search",
     "narrow_search",
-    "search_labs",
+    "download_webpage_content",
     "generate_final_output",
 ]:
     """Decide whether researcher search needs retry."""
