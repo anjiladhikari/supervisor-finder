@@ -3,7 +3,6 @@ from typing import Annotated, TypedDict
 
 from research_finder.models import (
     SearchRequest,
-    SearchResponse,
     TopicExpansion,
 )
 from research_finder.official_page_search import (
@@ -53,10 +52,13 @@ class ResearchGraphInput(TypedDict):
     raw_request: dict[str, object]
 
 
-class ResearchGraphOutput(WorkflowMessages, total=False):
+class ResearchGraphOutput(
+    WorkflowMessages,
+    total=False,
+):
     """Information returned after the graph finishes."""
 
-    final_response: SearchResponse | None
+    final_response: dict[str, object] | None
 
 
 class ResearchGraphState(WorkflowMessages, total=False):
@@ -97,4 +99,4 @@ class ResearchGraphState(WorkflowMessages, total=False):
 
     search_attempt_count: int
     download_attempt_count: int
-    final_response: SearchResponse | None
+    final_response: dict[str, object] | None
