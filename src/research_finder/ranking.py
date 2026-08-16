@@ -2,14 +2,18 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from research_finder.models import StrictModel
+from research_finder.models import (
+    StrictModel,
+)
 from research_finder.relevance import (
     ScoredResearcherProfile,
 )
 
 
-class RankedResearcherProfile(StrictModel):
-    """One ranked researcher result."""
+class RankedResearcherProfile(
+    StrictModel
+):
+    """One ranked researcher."""
 
     rank: int = Field(
         ge=1,
@@ -28,26 +32,21 @@ def _ranking_key(
     str,
     str,
 ]:
-    """Build deterministic ranking priority."""
-
-    profile = result.profile
-
-    verified = (
-        profile.verified_researcher
+    researcher = (
+        result
+        .verified_researcher
+        .candidate
     )
 
-    candidate = verified.candidate
-
-    researcher = candidate.researcher
+    verified = (
+        result
+        .verified_researcher
+    )
 
     return (
         -result.relevance_score,
-        -len(
-            profile.current_projects
-        ),
-        -len(
-            candidate.publications
-        ),
+        -result.keyword_score,
+        -result.semantic_score,
         -verified.verified_source_count,
         researcher.full_name.casefold(),
         researcher.university_name.casefold(),
@@ -60,26 +59,24 @@ def rank_researcher_results(
     ],
     *,
     max_results: int,
-) -> list[RankedResearcherProfile]:
-    """Rank researchers and keep strongest matches."""
+) -> list[
+    RankedResearcherProfile
+]:
+    """Rank strongest topic matches."""
 
     if max_results <= 0:
         return []
 
-    relevant_results = [
+    relevant = [
         result
         for result in results
         if result.relevance_score > 0
     ]
 
     ordered = sorted(
-        relevant_results,
+        relevant,
         key=_ranking_key,
     )
-
-    strongest = ordered[
-        :max_results
-    ]
 
     return [
         RankedResearcherProfile(
@@ -87,7 +84,7 @@ def rank_researcher_results(
             result=result,
         )
         for index, result in enumerate(
-            strongest,
+            ordered[:max_results],
             start=1,
         )
     ]
