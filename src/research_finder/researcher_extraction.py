@@ -1,8 +1,9 @@
 from __future__ import annotations
-from groq import RateLimitError
+
 import logging
 from dataclasses import dataclass
 
+from groq import RateLimitError
 from langchain_core.language_models.chat_models import (
     BaseChatModel,
 )

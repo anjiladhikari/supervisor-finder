@@ -1,3 +1,5 @@
+from _pytest import outcomes
+from _pytest import outcomes
 from pydantic import ValidationError
 
 from research_finder.deduplication import (
@@ -729,13 +731,22 @@ def extract_researcher_information(
         ],
     }
 
-    if outcome.failed_documents:
+    if outcome.rate_limited:
+        result["warnings"] = [
+            (
+                "Groq rate limit was reached. "
+                "Researcher extraction stopped early; "
+                "please try again after the API limit resets."
+            )
+        ]
+
+    elif outcome.failed_documents:
         result["warnings"] = [
             (
                 "Researcher extraction failed for "
                 f"{outcome.failed_documents} of "
                 f"{outcome.attempted_documents} "
-                "documents."
+                "attempted documents."
             )
         ]
 
