@@ -7,6 +7,7 @@ import streamlit as st
 
 from research_finder.graph import graph
 
+
 AUSTRALIAN_STATES = [
     "All Australia",
     "Australian Capital Territory",
@@ -26,8 +27,8 @@ def _render_researcher_card(
     """Render one researcher result."""
 
     with st.container(border=True):
-        header_column, score_column = (
-            st.columns([4, 1])
+        header_column, score_column = st.columns(
+            [4, 1]
         )
 
         rank = researcher.get(
@@ -44,21 +45,23 @@ def _render_researcher_card(
             "official_profile_url"
         )
 
+        scholar_url = researcher.get(
+            "google_scholar_url"
+        )
+
         with header_column:
             if profile_url:
                 st.markdown(
-                    f"### #{rank} [{name}]"
-                    f"({profile_url})"
+                    f"### #{rank} "
+                    f"[{name}]({profile_url})"
                 )
             else:
                 st.markdown(
                     f"### #{rank} {name}"
                 )
 
-            academic_title = (
-                researcher.get(
-                    "academic_title"
-                )
+            academic_title = researcher.get(
+                "academic_title"
             )
 
             role = researcher.get(
@@ -114,41 +117,94 @@ def _render_researcher_card(
                 / 100
             )
 
-        interests = researcher.get(
-            "research_interests",
-            [],
+        research_interests = (
+            researcher.get(
+                "research_interests",
+                [],
+            )
         )
 
-        if interests:
+        if research_interests:
             st.markdown(
                 "**Research topics / interests**"
             )
 
             st.write(
                 " • ".join(
-                    interests
+                    research_interests
                 )
             )
 
-        summary = researcher.get(
-            "profile_summary"
+        profile_summary = (
+            researcher.get(
+                "profile_summary"
+            )
         )
 
-        if summary:
+        if profile_summary:
             st.markdown(
                 "**Profile summary**"
             )
 
-            st.write(summary)
+            st.write(
+                profile_summary
+            )
 
-        if profile_url:
+        st.markdown(
+            "**Researcher links**"
+        )
+
+        if profile_url and scholar_url:
+            profile_column, scholar_column = (
+                st.columns(2)
+            )
+
+            with profile_column:
+                st.link_button(
+                    "Official university profile",
+                    profile_url,
+                    icon=(
+                        ":material/"
+                        "open_in_new:"
+                    ),
+                    width="stretch",
+                )
+
+            with scholar_column:
+                st.link_button(
+                    "Google Scholar",
+                    scholar_url,
+                    icon=(
+                        ":material/"
+                        "school:"
+                    ),
+                    width="stretch",
+                )
+
+        elif profile_url:
             st.link_button(
-                "Open official university profile",
+                "Official university profile",
                 profile_url,
                 icon=(
                     ":material/"
                     "open_in_new:"
                 ),
+            )
+
+        elif scholar_url:
+            st.link_button(
+                "Google Scholar",
+                scholar_url,
+                icon=(
+                    ":material/"
+                    "school:"
+                ),
+            )
+
+        if not scholar_url:
+            st.caption(
+                "Google Scholar profile "
+                "not confidently identified."
             )
 
         with st.expander(
@@ -207,18 +263,46 @@ def _render_researcher_card(
                 )
             )
 
-            if isinstance(
-                explanation,
-                list,
-            ):
-                for item in explanation:
+            if explanation:
+                st.markdown(
+                    "**Match explanation**"
+                )
+
+                if isinstance(
+                    explanation,
+                    list,
+                ):
+                    for item in explanation:
+                        st.write(
+                            f"- {item}"
+                        )
+
+                else:
                     st.write(
-                        f"- {item}"
+                        explanation
                     )
 
-            elif explanation:
+        with st.expander(
+            "Verification details"
+        ):
+            verified_at = researcher.get(
+                "verified_at"
+            )
+
+            st.write(
+                "Official university profile: "
+                + (
+                    "verified"
+                    if researcher.get(
+                        "verified"
+                    )
+                    else "not verified"
+                )
+            )
+
+            if verified_at:
                 st.write(
-                    explanation
+                    f"Verified at: {verified_at}"
                 )
 
 
@@ -273,8 +357,7 @@ def _render_response(
         return
 
     st.success(
-        f"Found {len(results)} "
-        f"researcher"
+        f"Found {len(results)} researcher"
         f"{'s' if len(results) != 1 else ''}."
     )
 
@@ -311,17 +394,20 @@ st.title(
 )
 
 st.write(
-    "Find researchers across Australian "
-    "universities by research topic."
+    "Find researchers working on your "
+    "research topic across Australian "
+    "universities."
 )
 
 st.caption(
-    "Researcher information is verified "
-    "against official university profiles."
+    "Researcher profiles are verified "
+    "against official university sources."
 )
 
 
-with st.container(border=True):
+with st.container(
+    border=True
+):
     st.header(
         "Find researchers"
     )
@@ -377,7 +463,8 @@ if submitted:
     else:
         selected_state = (
             None
-            if state == "All Australia"
+            if state
+            == "All Australia"
             else state
         )
 
@@ -431,7 +518,9 @@ if submitted:
                 "Search failed."
             )
 
-            st.exception(exc)
+            st.exception(
+                exc
+            )
 
         else:
             st.session_state[
@@ -448,6 +537,7 @@ if submitted:
 response = st.session_state.get(
     "search_result"
 )
+
 
 if response is not None:
     elapsed_seconds = (
