@@ -4,7 +4,6 @@ from research_finder.nodes import (
     broaden_search,
     download_webpage_content,
     expand_research_topic,
-    extract_researcher_details,
     extract_researcher_information,
     find_universities,
     generate_final_output,
@@ -72,10 +71,7 @@ def build_research_graph():
         "extract_researcher_information",
         extract_researcher_information,
     )
-    builder.add_node(
-        "extract_researcher_details",
-        extract_researcher_details,
-    )
+ 
     builder.add_node("score_relevance", score_relevance)
     builder.add_node("remove_duplicates", remove_duplicates)
 
@@ -126,13 +122,9 @@ def build_research_graph():
         "extract_researcher_information",
     )
 
+  
     builder.add_edge(
         "extract_researcher_information",
-        "extract_researcher_details",
-    )
-
-    builder.add_edge(
-        "extract_researcher_details",
         "verify_current_affiliation",
     )
 
