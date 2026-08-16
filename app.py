@@ -26,8 +26,13 @@ def _render_researcher_card(
 ) -> None:
     """Render one researcher result."""
 
-    with st.container(border=True):
-        header_column, score_column = st.columns(
+    with st.container(
+        border=True
+    ):
+        (
+            header_column,
+            score_column,
+        ) = st.columns(
             [4, 1]
         )
 
@@ -41,12 +46,22 @@ def _render_researcher_card(
             "Unknown researcher",
         )
 
-        profile_url = researcher.get(
-            "official_profile_url"
+        profile_url = (
+            researcher.get(
+                "official_profile_url"
+            )
         )
 
-        scholar_url = researcher.get(
-            "google_scholar_url"
+        scholar_url = (
+            researcher.get(
+                "google_scholar_url"
+            )
+        )
+
+        research_portal = (
+            researcher.get(
+                "research_degree_portal"
+            )
         )
 
         with header_column:
@@ -60,16 +75,22 @@ def _render_researcher_card(
                     f"### #{rank} {name}"
                 )
 
-            academic_title = researcher.get(
-                "academic_title"
+            academic_title = (
+                researcher.get(
+                    "academic_title"
+                )
             )
 
-            role = researcher.get(
-                "role"
+            role = (
+                researcher.get(
+                    "role"
+                )
             )
 
-            university = researcher.get(
-                "university_name"
+            university = (
+                researcher.get(
+                    "university_name"
+                )
             )
 
             details = [
@@ -84,7 +105,9 @@ def _render_researcher_card(
 
             if details:
                 st.caption(
-                    " • ".join(details)
+                    " • ".join(
+                        details
+                    )
                 )
 
             if researcher.get(
@@ -111,7 +134,10 @@ def _render_researcher_card(
 
             st.progress(
                 min(
-                    max(score, 0),
+                    max(
+                        score,
+                        0,
+                    ),
                     100,
                 )
                 / 100
@@ -154,12 +180,13 @@ def _render_researcher_card(
             "**Researcher links**"
         )
 
-        if profile_url and scholar_url:
-            profile_column, scholar_column = (
-                st.columns(2)
-            )
+        (
+            profile_column,
+            scholar_column,
+        ) = st.columns(2)
 
-            with profile_column:
+        with profile_column:
+            if profile_url:
                 st.link_button(
                     "Official university profile",
                     profile_url,
@@ -170,7 +197,8 @@ def _render_researcher_card(
                     width="stretch",
                 )
 
-            with scholar_column:
+        with scholar_column:
+            if scholar_url:
                 st.link_button(
                     "Google Scholar",
                     scholar_url,
@@ -180,31 +208,59 @@ def _render_researcher_card(
                     ),
                     width="stretch",
                 )
+            else:
+                st.caption(
+                    "Google Scholar profile "
+                    "not confidently identified."
+                )
 
-        elif profile_url:
-            st.link_button(
-                "Official university profile",
-                profile_url,
-                icon=(
-                    ":material/"
-                    "open_in_new:"
-                ),
+        st.markdown(
+            "**PhD / MRes / Masters-by-Research opportunities**"
+        )
+
+        if (
+            research_portal
+            and research_portal.get(
+                "url"
+            )
+        ):
+            university = (
+                researcher.get(
+                    "university_name",
+                    "university",
+                )
             )
 
-        elif scholar_url:
             st.link_button(
-                "Google Scholar",
-                scholar_url,
+                (
+                    "View available research "
+                    f"projects at {university}"
+                ),
+                research_portal[
+                    "url"
+                ],
                 icon=(
                     ":material/"
                     "school:"
                 ),
             )
 
-        if not scholar_url:
+            portal_title = (
+                research_portal.get(
+                    "title"
+                )
+            )
+
+            if portal_title:
+                st.caption(
+                    portal_title
+                )
+
+        else:
             st.caption(
-                "Google Scholar profile "
-                "not confidently identified."
+                "No central research-degree "
+                "projects page was found for "
+                "this university."
             )
 
         with st.expander(
@@ -224,7 +280,9 @@ def _render_researcher_card(
                 )
             )
 
-            score_columns = st.columns(2)
+            score_columns = (
+                st.columns(2)
+            )
 
             with score_columns[0]:
                 st.metric(
@@ -276,7 +334,6 @@ def _render_researcher_card(
                         st.write(
                             f"- {item}"
                         )
-
                 else:
                     st.write(
                         explanation
@@ -285,8 +342,10 @@ def _render_researcher_card(
         with st.expander(
             "Verification details"
         ):
-            verified_at = researcher.get(
-                "verified_at"
+            verified_at = (
+                researcher.get(
+                    "verified_at"
+                )
             )
 
             st.write(
@@ -302,7 +361,8 @@ def _render_researcher_card(
 
             if verified_at:
                 st.write(
-                    f"Verified at: {verified_at}"
+                    "Verified at: "
+                    f"{verified_at}"
                 )
 
 
@@ -470,7 +530,9 @@ if submitted:
 
         request = {
             "country": country,
-            "state": selected_state,
+            "state": (
+                selected_state
+            ),
             "research_topic": (
                 research_topic.strip()
             ),
@@ -500,12 +562,14 @@ if submitted:
                 ),
                 show_time=True,
             ):
-                output = graph.invoke(
-                    {
-                        "raw_request": (
-                            request
-                        ),
-                    }
+                output = (
+                    graph.invoke(
+                        {
+                            "raw_request": (
+                                request
+                            ),
+                        }
+                    )
                 )
 
             elapsed_seconds = (
@@ -534,8 +598,10 @@ if submitted:
             ] = elapsed_seconds
 
 
-response = st.session_state.get(
-    "search_result"
+response = (
+    st.session_state.get(
+        "search_result"
+    )
 )
 
 
