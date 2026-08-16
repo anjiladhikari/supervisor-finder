@@ -1153,6 +1153,14 @@ def _ranked_result_to_output(
         "verified_at": (
             verified.verified_at.isoformat()
         ),
+        "research_degree_projects": [
+    {
+        "title": project.title,
+        "url": project.url,
+    }
+    for project
+    in scored.research_degree_projects
+],
     }
 
 def generate_final_output(
