@@ -19,9 +19,7 @@ from research_finder.ranking import (
 from research_finder.relevance import (
     score_researcher_profiles,
 )
-from research_finder.research_profile import (
-    organise_verified_researchers,
-)
+
 from research_finder.researcher_details import (
     ResearchEvidenceItem,
     enrich_researcher_candidates,
@@ -931,49 +929,6 @@ def verify_current_affiliation(
     return result
 
 
-def organise_researcher_profiles(
-    state: ResearchGraphState,
-) -> dict[str, object]:
-    """Separate projects and general research interests."""
-
-    verified_results = list(
-        state.get(
-            "verified_results",
-            [],
-        )
-    )
-
-    if not verified_results:
-        return {
-            "organised_results": [],
-            "warnings": [("No verified researchers were available for profile organisation.")],
-            "execution_log": [
-                ("Researcher profile organisation completed: 0 researchers organised.")
-            ],
-        }
-
-    organised_results = organise_verified_researchers(verified_results)
-
-    current_projects = sum(len(result.current_projects) for result in organised_results)
-
-    previous_projects = sum(len(result.previous_projects) for result in organised_results)
-
-    unknown_projects = sum(len(result.unknown_projects) for result in organised_results)
-
-    return {
-        "organised_results": organised_results,
-        "execution_log": [
-            (
-                "Researcher profile organisation "
-                f"completed: {len(organised_results)} "
-                "researchers organised, "
-                f"{current_projects} current projects, "
-                f"{previous_projects} previous projects, "
-                f"{unknown_projects} projects with "
-                "unknown status."
-            )
-        ],
-    }
 
 
 def remove_duplicates(
