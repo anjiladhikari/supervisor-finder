@@ -1116,77 +1116,42 @@ def _ranked_result_to_output(
     """Flatten one researcher for the UI."""
 
     scored = ranked.result
-
-    verified = (
-        scored.verified_researcher
-    )
-
-    researcher = (
-        verified.candidate
-    )
-    "google_scholar_url": (
-    str(scored.google_scholar_url)
-    if scored.google_scholar_url
-    else None
-),
+    verified = scored.verified_researcher
+    researcher = verified.candidate
 
     return {
         "rank": ranked.rank,
-
-        "researcher_name": (
-            researcher.full_name
-        ),
-
-        "university_name": (
-            researcher.university_name
-        ),
-
-        "academic_title": (
-            researcher.academic_title
-        ),
-
+        "researcher_name": researcher.full_name,
+        "university_name": researcher.university_name,
+        "academic_title": researcher.academic_title,
         "role": researcher.role,
-
-        "profile_summary": (
-            researcher.profile_summary
-        ),
-
+        "profile_summary": researcher.profile_summary,
         "research_interests": list(
             researcher.research_interests
         ),
-
-        "relevance_score": (
-            scored.relevance_score
-        ),
-
-        "keyword_score": (
-            scored.keyword_score
-        ),
-
-        "semantic_score": (
-            scored.semantic_score
-        ),
-
+        "relevance_score": scored.relevance_score,
+        "keyword_score": scored.keyword_score,
+        "semantic_score": scored.semantic_score,
         "matched_terms": list(
             scored.matched_terms
         ),
-
         "match_explanation": list(
             scored.match_explanation
         ),
-
         "official_profile_url": str(
             researcher.source_url
         ),
-
+        "google_scholar_url": (
+            str(scored.google_scholar_url)
+            if scored.google_scholar_url
+            else None
+        ),
         "verified": True,
-
         "verified_at": (
-            verified
-            .verified_at
-            .isoformat()
+            verified.verified_at.isoformat()
         ),
     }
+
 def generate_final_output(
     state: ResearchGraphState,
 ) -> dict[str, object]:
