@@ -1,7 +1,7 @@
-from _pytest import outcomes
-from _pytest import outcomes
 from pydantic import ValidationError
-
+from research_finder.scholar import (
+    find_google_scholar_profile,
+)
 from research_finder.deduplication import (
     deduplicate_scored_researchers,
 )
@@ -1261,4 +1261,83 @@ def _evidence_item_to_output(
         "name": item.name,
         "url": str(item.source_url),
         "year": item.publication_year,
+    }
+
+def find_scholar_profiles(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Find Google Scholar profiles for scored researchers."""
+
+    scored_results = list(
+        state.get(
+            "scored_results",
+            [],
+        )
+    )
+
+    if not scored_results:
+        return {
+            "scored_results": [],
+            "execution_log": [
+                "Google Scholar search completed: "
+                "0 researchers checked."
+            ],
+        }
+
+    client = DDGSSearchClient()
+
+    updated_results = []
+
+    found_count = 0
+
+    for scored in scored_results:
+        researcher = (
+            scored
+            .verified_researcher
+            .candidate
+        )
+
+        scholar = (
+            find_google_scholar_profile(
+                researcher_name=(
+                    researcher.full_name
+                ),
+                university_name=(
+                    researcher.university_name
+                ),
+                client=client,
+            )
+        )
+
+        scholar_url = (
+            scholar.scholar_url
+            if scholar is not None
+            else None
+        )
+
+        if scholar_url:
+            found_count += 1
+
+        updated_results.append(
+            scored.model_copy(
+                update={
+                    "google_scholar_url": (
+                        scholar_url
+                    )
+                }
+            )
+        )
+
+    return {
+        "scored_results": (
+            updated_results
+        ),
+        "execution_log": [
+            (
+                "Google Scholar search "
+                f"completed: {found_count} "
+                f"of {len(scored_results)} "
+                "profiles found."
+            )
+        ],
     }
