@@ -4,12 +4,17 @@ from pydantic import ValidationError
 from research_finder.scholar import (
     find_google_scholar_profile,
 )
+from research_finder.research_projects import (
+    ResearchDegreePortal,
+    find_research_degree_portal,
+)
+from research_finder.web_search import (
+    create_search_client,
+)
 from research_finder.deduplication import (
     deduplicate_scored_researchers,
 )
-from research_finder.research_projects import (
-    find_research_degree_projects,
-)
+
 from research_finder.llm import create_chat_model
 from research_finder.location import (
     LocationLookupError,
@@ -1113,55 +1118,108 @@ def rank_results(
 
     return response
 
+
+
+
+
 def _ranked_result_to_output(
     ranked: RankedResearcherProfile,
 ) -> dict[str, object]:
     """Flatten one researcher for the UI."""
 
     scored = ranked.result
-    verified = scored.verified_researcher
-    researcher = verified.candidate
+    verified = (
+        scored.verified_researcher
+    )
+    researcher = (
+        verified.candidate
+    )
+
+    portal = (
+        scored.research_degree_portal
+    )
 
     return {
         "rank": ranked.rank,
-        "researcher_name": researcher.full_name,
-        "university_name": researcher.university_name,
-        "academic_title": researcher.academic_title,
-        "role": researcher.role,
-        "profile_summary": researcher.profile_summary,
+
+        "researcher_name": (
+            researcher.full_name
+        ),
+
+        "university_name": (
+            researcher.university_name
+        ),
+
+        "academic_title": (
+            researcher.academic_title
+        ),
+
+        "role": (
+            researcher.role
+        ),
+
+        "profile_summary": (
+            researcher.profile_summary
+        ),
+
         "research_interests": list(
             researcher.research_interests
         ),
-        "relevance_score": scored.relevance_score,
-        "keyword_score": scored.keyword_score,
-        "semantic_score": scored.semantic_score,
+
+        "relevance_score": (
+            scored.relevance_score
+        ),
+
+        "keyword_score": (
+            scored.keyword_score
+        ),
+
+        "semantic_score": (
+            scored.semantic_score
+        ),
+
         "matched_terms": list(
             scored.matched_terms
         ),
+
         "match_explanation": list(
             scored.match_explanation
         ),
+
         "official_profile_url": str(
             researcher.source_url
         ),
+
         "google_scholar_url": (
-            str(scored.google_scholar_url)
+            str(
+                scored.google_scholar_url
+            )
             if scored.google_scholar_url
             else None
         ),
-        "verified": True,
-        "verified_at": (
-            verified.verified_at.isoformat()
+
+        "research_degree_portal": (
+            {
+                "title": (
+                    portal.title
+                ),
+                "url": str(
+                    portal.url
+                ),
+            }
+            if portal is not None
+            else None
         ),
-        "research_degree_projects": [
-    {
-        "title": project.title,
-        "url": project.url,
+
+        "verified": True,
+
+        "verified_at": (
+            verified
+            .verified_at
+            .isoformat()
+        ),
     }
-    for project
-    in scored.research_degree_projects
-],
-    }
+
 
 def generate_final_output(
     state: ResearchGraphState,
@@ -1262,16 +1320,18 @@ def find_scholar_profiles(
         return {
             "scored_results": [],
             "execution_log": [
-                "Google Scholar search completed: "
-                "0 researchers checked."
+                (
+                    "Google Scholar search completed: "
+                    "0 researchers checked."
+                )
             ],
         }
 
-    client = DDGSSearchClient()
+    client = create_search_client()
 
     updated_results = []
-
     found_count = 0
+    failed_searches = 0
 
     for scored in scored_results:
         researcher = (
@@ -1280,17 +1340,22 @@ def find_scholar_profiles(
             .candidate
         )
 
-        scholar = (
-            find_google_scholar_profile(
-                researcher_name=(
-                    researcher.full_name
-                ),
-                university_name=(
-                    researcher.university_name
-                ),
-                client=client,
+        try:
+            scholar = (
+                find_google_scholar_profile(
+                    researcher_name=(
+                        researcher.full_name
+                    ),
+                    university_name=(
+                        researcher.university_name
+                    ),
+                    client=client,
+                )
             )
-        )
+
+        except Exception:
+            scholar = None
+            failed_searches += 1
 
         scholar_url = (
             scholar.scholar_url
@@ -1311,7 +1376,7 @@ def find_scholar_profiles(
             )
         )
 
-    return {
+    result: dict[str, object] = {
         "scored_results": (
             updated_results
         ),
@@ -1324,6 +1389,132 @@ def find_scholar_profiles(
             )
         ],
     }
+
+    if failed_searches:
+        result["warnings"] = [
+            (
+                "Google Scholar search "
+                f"failed for {failed_searches} "
+                "researchers."
+            )
+        ]
+
+    return result
+
+
+def find_research_projects(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Find one central research-degree portal per university."""
+
+    scored_results = list(
+        state.get(
+            "scored_results",
+            [],
+        )
+    )
+
+    if not scored_results:
+        return {
+            "scored_results": [],
+            "execution_log": [
+                (
+                    "Research-degree portal search "
+                    "completed: 0 universities checked."
+                )
+            ],
+        }
+
+    client = create_search_client()
+
+    portal_cache: dict[
+        str,
+        ResearchDegreePortal | None,
+    ] = {}
+
+    updated_results = []
+
+    found_count = 0
+    failed_searches = 0
+
+    for scored in scored_results:
+        researcher = (
+            scored
+            .verified_researcher
+            .candidate
+        )
+
+        domain = (
+            researcher
+            .official_domain
+            .casefold()
+        )
+
+        if domain not in portal_cache:
+            try:
+                portal = (
+                    find_research_degree_portal(
+                        university_name=(
+                            researcher
+                            .university_name
+                        ),
+                        official_domain=(
+                            researcher
+                            .official_domain
+                        ),
+                        client=client,
+                    )
+                )
+
+            except Exception:
+                portal = None
+                failed_searches += 1
+
+            portal_cache[
+                domain
+            ] = portal
+
+            if portal is not None:
+                found_count += 1
+
+        updated_results.append(
+            scored.model_copy(
+                update={
+                    "research_degree_portal": (
+                        portal_cache[
+                            domain
+                        ]
+                    )
+                }
+            )
+        )
+
+    result: dict[str, object] = {
+        "scored_results": (
+            updated_results
+        ),
+        "execution_log": [
+            (
+                "Research-degree portal search "
+                f"completed: {len(portal_cache)} "
+                "universities checked, "
+                f"{found_count} portals found."
+            )
+        ],
+    }
+
+    if failed_searches:
+        result["warnings"] = [
+            (
+                "Research-degree portal search "
+                f"failed for {failed_searches} "
+                "universities."
+            )
+        ]
+
+    return result
+
+
 
 
 def find_research_projects(
