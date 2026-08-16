@@ -7,6 +7,9 @@ from research_finder.scholar import (
 from research_finder.deduplication import (
     deduplicate_scored_researchers,
 )
+from research_finder.research_projects import (
+    find_research_degree_projects,
+)
 from research_finder.llm import create_chat_model
 from research_finder.location import (
     LocationLookupError,
@@ -1310,6 +1313,102 @@ def find_scholar_profiles(
                 f"completed: {found_count} "
                 f"of {len(scored_results)} "
                 "profiles found."
+            )
+        ],
+    }
+
+
+def find_research_projects(
+    state: ResearchGraphState,
+) -> dict[str, object]:
+    """Find same-university research-degree projects."""
+
+    scored_results = list(
+        state.get(
+            "scored_results",
+            [],
+        )
+    )
+
+    request = state.get(
+        "request"
+    )
+
+    if (
+        not scored_results
+        or request is None
+    ):
+        return {
+            "scored_results": scored_results,
+            "execution_log": [
+                (
+                    "Research project search "
+                    "completed: 0 universities checked."
+                )
+            ],
+        }
+
+    client = create_search_client()
+
+    # Search once per university, not once
+    # per researcher.
+    project_cache: dict[
+        str,
+        list,
+    ] = {}
+
+    updated_results = []
+
+    for scored in scored_results:
+        researcher = (
+            scored
+            .verified_researcher
+            .candidate
+        )
+
+        domain = (
+            researcher
+            .official_domain
+            .casefold()
+        )
+
+        if domain not in project_cache:
+            project_cache[domain] = (
+                find_research_degree_projects(
+                    research_topic=(
+                        request.research_topic
+                    ),
+                    university_name=(
+                        researcher.university_name
+                    ),
+                    official_domain=(
+                        researcher.official_domain
+                    ),
+                    client=client,
+                    max_results=3,
+                )
+            )
+
+        updated_results.append(
+            scored.model_copy(
+                update={
+                    "research_degree_projects": (
+                        project_cache[
+                            domain
+                        ]
+                    )
+                }
+            )
+        )
+
+    return {
+        "scored_results": updated_results,
+        "execution_log": [
+            (
+                "Research project search "
+                f"completed: "
+                f"{len(project_cache)} "
+                "universities checked."
             )
         ],
     }

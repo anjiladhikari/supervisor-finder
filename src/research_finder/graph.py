@@ -1,3 +1,4 @@
+from bs4 import builder
 from __future__ import annotations
 
 from langgraph.graph import (
@@ -23,6 +24,7 @@ from research_finder.nodes import (
     search_researchers,
     validate_input,
     verify_current_affiliation,
+    find_research_projects,
 )
 from research_finder.routes import (
     route_after_researcher_search,
@@ -56,7 +58,10 @@ def build_research_graph():
         "validate_input",
         validate_input,
     )
-
+    builder.add_node(
+    "find_research_projects",
+    find_research_projects,
+)
     builder.add_node(
         "expand_research_topic",
         expand_research_topic,
@@ -205,11 +210,15 @@ def build_research_graph():
         "find_scholar_profiles",
     )
 
-    # Final researcher processing.
     builder.add_edge(
         "find_scholar_profiles",
-        "remove_duplicates",
+        "find_research_projects",
     )
+
+    builder.add_edge(
+    "find_research_projects",
+    "remove_duplicates",
+)
 
     builder.add_edge(
         "remove_duplicates",

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import re
-
+from research_finder.research_projects import (
+    ResearchProjectLink,
+)
 from pydantic import Field, HttpUrl
 from research_finder.models import StrictModel
 from research_finder.verification import (
@@ -66,6 +68,11 @@ class ScoredResearcherProfile(StrictModel):
     )
 
     google_scholar_url: HttpUrl | None = None
+    research_degree_projects: list[
+    ResearchProjectLink
+] = Field(
+    default_factory=list,
+)
 
 
 def _normalise(value: str) -> str:
