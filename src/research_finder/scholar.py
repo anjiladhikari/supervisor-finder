@@ -20,7 +20,7 @@ class ScholarProfile:
 def _is_google_scholar_profile(
     url: str,
 ) -> bool:
-    """Accept only real Google Scholar author profiles."""
+    """Accept only Google Scholar author-profile URLs."""
 
     parsed = urlparse(url)
 
@@ -43,7 +43,7 @@ def find_google_scholar_profile(
     university_name: str,
     client: WebSearchClient,
 ) -> ScholarProfile | None:
-    """Find one likely Scholar profile."""
+    """Find one likely Google Scholar profile."""
 
     query = (
         f'"{researcher_name}" '
