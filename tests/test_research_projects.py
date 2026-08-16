@@ -1,5 +1,5 @@
 from research_finder.research_projects import (
-    find_research_degree_projects,
+    find_research_degree_portal,
 )
 from research_finder.web_search import (
     WebSearchResult,
@@ -14,53 +14,73 @@ class FakeSearchClient:
         return [
             WebSearchResult(
                 title=(
-                    "Available PhD Projects"
+                    "Available research projects"
                 ),
                 url=(
-                    "https://www.deakin.edu.au/"
-                    "research/research-degrees/"
+                    "https://www.utas.edu.au/"
+                    "research/degrees/"
                     "available-projects"
                 ),
                 snippet=(
-                    "Available research projects"
+                    "Explore available PhD "
+                    "and research degree projects."
                 ),
                 rank=1,
             ),
             WebSearchResult(
-                title="Wrong university",
-                url=(
-                    "https://example.com/phd"
+                title=(
+                    "One individual PhD project"
                 ),
-                snippet="PhD projects",
+                url=(
+                    "https://www.utas.edu.au/"
+                    "research/project/example"
+                ),
+                snippet=(
+                    "Individual PhD project."
+                ),
                 rank=2,
+            ),
+            WebSearchResult(
+                title=(
+                    "Wrong university"
+                ),
+                url=(
+                    "https://example.com/"
+                    "available-projects"
+                ),
+                snippet=(
+                    "Available research projects."
+                ),
+                rank=3,
             ),
         ]
 
 
-def test_finds_only_same_university_projects() -> None:
-    projects = (
-        find_research_degree_projects(
-            research_topic=(
-                "Reinforcement learning"
-            ),
+def test_finds_central_research_degree_portal() -> None:
+    portal = (
+        find_research_degree_portal(
             university_name=(
-                "Deakin University"
+                "University of Tasmania"
             ),
             official_domain=(
-                "deakin.edu.au"
+                "utas.edu.au"
             ),
             client=FakeSearchClient(),
         )
     )
 
-    assert len(projects) == 1
+    assert portal is not None
 
     assert (
-        projects[0].title
-        == "Available PhD Projects"
+        portal.title
+        == "Available research projects"
     )
 
     assert (
-        "deakin.edu.au"
-        in projects[0].url
+        str(portal.url)
+        == (
+            "https://www.utas.edu.au/"
+            "research/degrees/"
+            "available-projects"
+        )
     )
