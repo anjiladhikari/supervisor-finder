@@ -11,7 +11,6 @@ from research_finder.nodes import (
     generate_search_queries,
     initialize_workflow,
     narrow_search,
-    organise_researcher_profiles,
     rank_results,
     remove_duplicates,
     score_relevance,
