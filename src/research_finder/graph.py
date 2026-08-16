@@ -1,3 +1,4 @@
+from bs4 import builder
 from langgraph.graph import END, START, StateGraph
 
 from research_finder.nodes import (
@@ -63,10 +64,8 @@ def build_research_graph():
         "download_webpage_content",
         download_webpage_content,
     )
-    builder.add_node(
-        "organise_researcher_profiles",
-        organise_researcher_profiles,
-    )
+  
+
     builder.add_node(
         "extract_researcher_information",
         extract_researcher_information,
@@ -129,14 +128,9 @@ def build_research_graph():
     )
 
     builder.add_edge(
-        "verify_current_affiliation",
-        "organise_researcher_profiles",
-    )
-
-    builder.add_edge(
-        "organise_researcher_profiles",
-        "score_relevance",
-    )
+    "verify_current_affiliation",
+    "score_relevance",
+)
 
     builder.add_edge("score_relevance", "remove_duplicates")
     builder.add_edge("remove_duplicates", "rank_results")
