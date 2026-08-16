@@ -862,7 +862,7 @@ def verify_current_affiliation(
 
     candidates = list(
         state.get(
-            "enriched_candidates",
+            "extracted_candidates",
             [],
         )
     )
@@ -870,7 +870,7 @@ def verify_current_affiliation(
     if not candidates:
         return {
             "verified_results": [],
-            "warnings": [("No enriched researchers were available for verification.")],
+            "warnings": [("No researcher candidates were available for verification.")],
             "execution_log": [
                 ("Researcher verification completed: 0 candidates checked, 0 verified.")
             ],
