@@ -4,12 +4,15 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from research_finder.web_search import (
-    DDGSSearchClient,
+    WebSearchClient,
+    WebSearchRequest,
 )
 
 
 @dataclass(frozen=True)
 class ScholarProfile:
+    """One discovered Google Scholar profile."""
+
     researcher_name: str
     scholar_url: str
 
@@ -17,6 +20,8 @@ class ScholarProfile:
 def _is_google_scholar_profile(
     url: str,
 ) -> bool:
+    """Accept only real Google Scholar author profiles."""
+
     parsed = urlparse(url)
 
     hostname = (
@@ -36,8 +41,10 @@ def find_google_scholar_profile(
     *,
     researcher_name: str,
     university_name: str,
-    client: DDGSSearchClient,
+    client: WebSearchClient,
 ) -> ScholarProfile | None:
+    """Find one likely Scholar profile."""
+
     query = (
         f'"{researcher_name}" '
         f'"{university_name}" '
@@ -45,21 +52,23 @@ def find_google_scholar_profile(
     )
 
     results = client.search(
-        query,
-        max_results=5,
+        WebSearchRequest(
+            query=query,
+            max_results=5,
+        )
     )
 
     for result in results:
         url = str(result.url)
 
-        if _is_google_scholar_profile(
+        if not _is_google_scholar_profile(
             url
         ):
-            return ScholarProfile(
-                researcher_name=(
-                    researcher_name
-                ),
-                scholar_url=url,
-            )
+            continue
+
+        return ScholarProfile(
+            researcher_name=researcher_name,
+            scholar_url=url,
+        )
 
     return None
