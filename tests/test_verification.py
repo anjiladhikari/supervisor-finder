@@ -1,8 +1,4 @@
 from research_finder import nodes as nodes_module
-from research_finder.researcher_details import (
-    EnrichedResearcherCandidate,
-    ResearchEvidenceItem,
-)
 from research_finder.researcher_extraction import (
     ResearcherCandidate,
 )
@@ -16,20 +12,14 @@ from research_finder.web_content import (
     DownloadedWebPage,
 )
 
+
 PROFILE_URL = (
     "https://www.deakin.edu.au/"
     "profile/jane-smith"
 )
 
-PROJECT_URL = (
-    "https://www.deakin.edu.au/"
-    "research/adaptive-learning"
-)
-
 
 def create_researcher() -> ResearcherCandidate:
-    """Create one researcher."""
-
     return ResearcherCandidate(
         full_name="Jane Smith",
         academic_title="Professor",
@@ -53,85 +43,32 @@ def create_researcher() -> ResearcherCandidate:
     )
 
 
-def create_profile_document() -> DownloadedWebPage:
-    """Create official researcher-profile evidence."""
-
+def create_profile_document(
+    *,
+    target: SearchTarget = (
+        SearchTarget.RESEARCHER
+    ),
+) -> DownloadedWebPage:
     return DownloadedWebPage(
         university_name="Deakin University",
         official_domain="deakin.edu.au",
-        target=SearchTarget.RESEARCHER,
+        target=target,
         source_url=PROFILE_URL,
         final_url=PROFILE_URL,
         page_title="Jane Smith",
         content=(
             "Professor Jane Smith is a Professor "
-            "of Artificial Intelligence. "
-            "Contact jane.smith@deakin.edu.au."
+            "of Artificial Intelligence."
         ),
         content_type="text/html",
         status_code=200,
-    )
-
-
-def create_project_document() -> DownloadedWebPage:
-    """Create project evidence."""
-
-    return DownloadedWebPage(
-        university_name="Deakin University",
-        official_domain="deakin.edu.au",
-        target=SearchTarget.PROJECT,
-        source_url=PROJECT_URL,
-        final_url=PROJECT_URL,
-        page_title="Adaptive Learning Project",
-        content=(
-            "Jane Smith leads the "
-            "Adaptive Learning Project."
-        ),
-        content_type="text/html",
-        status_code=200,
-    )
-
-
-def create_candidate(
-    *,
-    include_project: bool = False,
-) -> EnrichedResearcherCandidate:
-    """Create an enriched researcher."""
-
-    projects = []
-
-    if include_project:
-        projects.append(
-            ResearchEvidenceItem(
-                name="Adaptive Learning Project",
-                target=SearchTarget.PROJECT,
-                source_url=PROJECT_URL,
-                source_title=(
-                    "Adaptive Learning Project"
-                ),
-                evidence_text=(
-                    "Jane Smith leads the "
-                    "Adaptive Learning Project."
-                ),
-            )
-        )
-
-    return EnrichedResearcherCandidate(
-        researcher=create_researcher(),
-        public_email=(
-            "jane.smith@deakin.edu.au"
-        ),
-        public_email_source_url=PROFILE_URL,
-        labs=[],
-        projects=projects,
-        publications=[],
     )
 
 
 def test_verifies_official_researcher() -> None:
     outcome = verify_researcher_candidates(
         candidates=[
-            create_candidate()
+            create_researcher()
         ],
         documents=[
             create_profile_document()
@@ -144,101 +81,82 @@ def test_verifies_official_researcher() -> None:
         outcome.verified_candidates
     ) == 1
 
-    verified = outcome.verified_candidates[0]
-
-    assert (
-        verified.candidate.researcher.full_name
-        == "Jane Smith"
+    verified = (
+        outcome.verified_candidates[0]
     )
 
-    assert str(
-        verified.candidate.public_email
-    ) == "jane.smith@deakin.edu.au"
+    assert (
+        verified.candidate.full_name
+        == "Jane Smith"
+    )
 
 
 def test_rejects_missing_profile_evidence() -> None:
     outcome = verify_researcher_candidates(
         candidates=[
-            create_candidate()
+            create_researcher()
         ],
         documents=[],
     )
 
     assert outcome.rejected_candidates == 1
-    assert outcome.verified_candidates == ()
+    assert (
+        outcome.verified_candidates
+        == ()
+    )
 
 
-def test_keeps_grounded_project() -> None:
+def test_rejects_non_profile_page() -> None:
     outcome = verify_researcher_candidates(
         candidates=[
-            create_candidate(
-                include_project=True
-            )
+            create_researcher()
         ],
         documents=[
-            create_profile_document(),
-            create_project_document(),
+            create_profile_document(
+                target=SearchTarget.PUBLICATION
+            )
         ],
     )
 
-    verified = outcome.verified_candidates[0]
-
-    assert len(
-        verified.candidate.projects
-    ) == 1
-
+    assert outcome.rejected_candidates == 1
     assert (
-        verified.candidate.projects[0].name
-        == "Adaptive Learning Project"
+        outcome.verified_candidates
+        == ()
     )
 
 
-def test_discards_unsupported_project() -> None:
+def test_records_profile_source() -> None:
     outcome = verify_researcher_candidates(
         candidates=[
-            create_candidate(
-                include_project=True
-            )
+            create_researcher()
         ],
         documents=[
             create_profile_document()
         ],
     )
 
-    verified = outcome.verified_candidates[0]
-
-    assert verified.candidate.projects == []
-    assert outcome.discarded_claims == 1
-
-
-def test_verification_records_source_count() -> None:
-    outcome = verify_researcher_candidates(
-        candidates=[
-            create_candidate(
-                include_project=True
-            )
-        ],
-        documents=[
-            create_profile_document(),
-            create_project_document(),
-        ],
+    verified = (
+        outcome.verified_candidates[0]
     )
 
-    verified = outcome.verified_candidates[0]
-
-    assert verified.verified_source_count == 2
+    assert (
+        verified.verified_source_count
+        == 1
+    )
 
 
 def test_node_handles_no_candidates() -> None:
     result = (
         nodes_module.verify_current_affiliation(
             {
-                "enriched_candidates": [],
+                "extracted_candidates": [],
             }
         )
     )
 
-    assert result["verified_results"] == []
+    assert result[
+        "verified_results"
+    ] == []
 
     assert result["execution_log"] == [
         (
