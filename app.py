@@ -7,6 +7,7 @@ import streamlit as st
 
 from research_finder.graph import graph
 
+
 AUSTRALIAN_STATES = [
     "All Australia",
     "Australian Capital Territory",
@@ -20,56 +21,45 @@ AUSTRALIAN_STATES = [
 ]
 
 
-def _render_evidence_items(
-    title: str,
-    items: list[dict[str, Any]],
-) -> None:
-    if not items:
-        return
-
-    st.markdown(f"**{title}**")
-
-    for item in items:
-        name = item.get("name") or "Untitled"
-        url = item.get("url")
-        year = item.get("year")
-
-        label = name
-
-        if year:
-            label = f"{name} ({year})"
-
-        if url:
-            st.markdown(f"- [{label}]({url})")
-        else:
-            st.markdown(f"- {label}")
-
-
 def _render_researcher_card(
     researcher: dict[str, Any],
 ) -> None:
+    """Render one researcher result."""
+
     with st.container(border=True):
-        header_column, score_column = st.columns(
-            [4, 1]
+        header_column, score_column = (
+            st.columns([4, 1])
+        )
+
+        rank = researcher.get(
+            "rank",
+            "",
+        )
+
+        name = researcher.get(
+            "researcher_name",
+            "Unknown researcher",
+        )
+
+        profile_url = researcher.get(
+            "official_profile_url"
         )
 
         with header_column:
-            rank = researcher.get(
-                "rank",
-                "",
-            )
+            if profile_url:
+                st.markdown(
+                    f"### #{rank} [{name}]"
+                    f"({profile_url})"
+                )
+            else:
+                st.markdown(
+                    f"### #{rank} {name}"
+                )
 
-            name = researcher.get(
-                "researcher_name",
-                "Unknown researcher",
-            )
-
-            st.subheader(
-                f"#{rank} {name}"
-            )
-
-            academic_title = researcher.get(
-                "academic_title"
+            academic_title = (
+                researcher.get(
+                    "academic_title"
+                )
             )
 
             role = researcher.get(
@@ -95,10 +85,12 @@ def _render_researcher_card(
                     " • ".join(details)
                 )
 
-            if researcher.get("verified"):
-                st.success(
-                    "Verified using official "
-                    "university evidence."
+            if researcher.get(
+                "verified"
+            ):
+                st.caption(
+                    "Verified from official "
+                    "university profile"
                 )
 
         with score_column:
@@ -110,7 +102,7 @@ def _render_researcher_card(
             )
 
             st.metric(
-                "Relevance",
+                "Topic match",
                 f"{score}/100",
                 border=True,
             )
@@ -123,118 +115,79 @@ def _render_researcher_card(
                 / 100
             )
 
-        research_interests = researcher.get(
+        interests = researcher.get(
             "research_interests",
             [],
         )
 
-        if research_interests:
+        if interests:
             st.markdown(
-                "**Research interests**"
+                "**Research topics / interests**"
             )
 
             st.write(
                 " • ".join(
-                    research_interests
+                    interests
                 )
             )
 
-        profile_summary = researcher.get(
+        summary = researcher.get(
             "profile_summary"
         )
 
-        if profile_summary:
+        if summary:
             st.markdown(
                 "**Profile summary**"
             )
 
-            st.write(
-                profile_summary
-            )
+            st.write(summary)
 
-        evidence_column, source_column = (
-            st.columns(2)
-        )
-
-        with evidence_column:
-            _render_evidence_items(
-                "Current projects",
-                researcher.get(
-                    "current_projects",
-                    [],
+        if profile_url:
+            st.link_button(
+                "Open official university profile",
+                profile_url,
+                icon=(
+                    ":material/"
+                    "open_in_new:"
                 ),
             )
-
-            _render_evidence_items(
-                "Previous projects",
-                researcher.get(
-                    "previous_projects",
-                    [],
-                ),
-            )
-
-            _render_evidence_items(
-                "Other projects",
-                researcher.get(
-                    "unknown_projects",
-                    [],
-                ),
-            )
-
-            _render_evidence_items(
-                "Relevant publications",
-                researcher.get(
-                    "publications",
-                    [],
-                ),
-            )
-
-            _render_evidence_items(
-                "Labs / research groups",
-                researcher.get(
-                    "labs",
-                    [],
-                ),
-            )
-
-        with source_column:
-            st.markdown(
-                "**Contact & sources**"
-            )
-
-            email = researcher.get(
-                "public_email"
-            )
-
-            if email:
-                st.code(email)
-            else:
-                st.caption(
-                    "No verified public "
-                    "university email found."
-                )
-
-            profile_url = researcher.get(
-                "official_profile_url"
-            )
-
-            if profile_url:
-                st.link_button(
-                    "Official university profile",
-                    profile_url,
-                    icon=(
-                        ":material/"
-                        "open_in_new:"
-                    ),
-                    width="stretch",
-                )
 
         with st.expander(
             "Why this researcher matched"
         ):
-            matched_terms = researcher.get(
-                "matched_terms",
-                [],
+            keyword_score = int(
+                researcher.get(
+                    "keyword_score",
+                    0,
+                )
+            )
+
+            semantic_score = int(
+                researcher.get(
+                    "semantic_score",
+                    0,
+                )
+            )
+
+            score_columns = st.columns(2)
+
+            with score_columns[0]:
+                st.metric(
+                    "Direct topic match",
+                    f"{keyword_score}/100",
+                )
+
+            with score_columns[1]:
+                st.metric(
+                    "Related topic match",
+                    f"{semantic_score}/100",
+                )
+
+            matched_terms = (
+                researcher.get(
+                    "matched_terms",
+                    [],
+                )
             )
 
             if matched_terms:
@@ -248,87 +201,33 @@ def _render_researcher_card(
                     )
                 )
 
-            explanation = researcher.get(
-                "match_explanation"
+            explanation = (
+                researcher.get(
+                    "match_explanation",
+                    [],
+                )
             )
 
-            if explanation:
-                st.markdown(
-                    "**Explanation**"
-                )
+            if isinstance(
+                explanation,
+                list,
+            ):
+                for item in explanation:
+                    st.write(
+                        f"- {item}"
+                    )
 
+            elif explanation:
                 st.write(
                     explanation
-                )
-
-            breakdown = researcher.get(
-                "score_breakdown",
-                {},
-            )
-
-            if breakdown:
-                st.markdown(
-                    "**Score breakdown**"
-                )
-
-                labels = {
-                    "research_interests": (
-                        "Research interests"
-                    ),
-                    "current_projects": (
-                        "Current projects"
-                    ),
-                    "publications": (
-                        "Publications"
-                    ),
-                    "labs": (
-                        "Labs / groups"
-                    ),
-                    "previous_projects": (
-                        "Previous projects"
-                    ),
-                    "unknown_projects": (
-                        "Other projects"
-                    ),
-                }
-
-                for key, value in (
-                    breakdown.items()
-                ):
-                    label = labels.get(
-                        key,
-                        key.replace(
-                            "_",
-                            " ",
-                        ).title(),
-                    )
-
-                    st.write(
-                        f"{label}: {value}"
-                    )
-
-        with st.expander(
-            "Verification details"
-        ):
-            verified_at = researcher.get(
-                "verified_at"
-            )
-
-            if verified_at:
-                st.write(
-                    f"Verified at: "
-                    f"{verified_at}"
-                )
-            else:
-                st.write(
-                    "Verification timestamp "
-                    "not available."
                 )
 
 
 def _render_response(
     response: dict[str, Any],
 ) -> None:
+    """Render workflow results."""
+
     errors = response.get(
         "errors",
         [],
@@ -359,8 +258,8 @@ def _render_response(
 
     if not results:
         st.info(
-            "Search completed, but no strong "
-            "matching researchers were found."
+            "No matching researchers "
+            "were found."
         )
 
         if warnings:
@@ -375,14 +274,13 @@ def _render_response(
         return
 
     st.success(
-        f"Search complete — "
-        f"{len(results)} researcher"
-        f"{'s' if len(results) != 1 else ''} "
-        f"found."
+        f"Found {len(results)} "
+        f"researcher"
+        f"{'s' if len(results) != 1 else ''}."
     )
 
     st.header(
-        "Strongest matches"
+        "Researchers"
     )
 
     for researcher in results:
@@ -402,7 +300,7 @@ def _render_response(
 
 st.set_page_config(
     page_title=(
-        "Research Supervisor & Lab Finder"
+        "Australian Researcher Finder"
     ),
     page_icon="🔎",
     layout="wide",
@@ -410,18 +308,17 @@ st.set_page_config(
 
 
 st.title(
-    "Research Supervisor & Lab Finder"
+    "Australian Researcher Finder"
 )
 
 st.write(
-    "Find Australian university researchers, "
-    "labs, projects and publications related "
-    "to your research topic."
+    "Find researchers across Australian "
+    "universities by research topic."
 )
 
 st.caption(
-    "Results are based on official "
-    "university sources."
+    "Researcher information is verified "
+    "against official university profiles."
 )
 
 
@@ -445,19 +342,23 @@ with st.container(border=True):
             index=6,
         )
 
-        research_topic = st.text_input(
-            "Research topic",
-            placeholder=(
-                "e.g. Reinforcement learning"
-            ),
+        research_topic = (
+            st.text_input(
+                "Research topic",
+                placeholder=(
+                    "e.g. Reinforcement learning"
+                ),
+            )
         )
 
-        max_results = st.number_input(
-            "Maximum results",
-            min_value=1,
-            max_value=20,
-            value=3,
-            step=1,
+        max_results = (
+            st.number_input(
+                "Maximum results",
+                min_value=1,
+                max_value=20,
+                value=5,
+                step=1,
+            )
         )
 
         submitted = (
@@ -500,17 +401,24 @@ if submitted:
             "search_elapsed_seconds"
         ] = None
 
-        start_time = time.perf_counter()
+        start_time = (
+            time.perf_counter()
+        )
 
         try:
             with st.spinner(
-                "Searching official "
-                "university sources...",
+                (
+                    "Searching official "
+                    "university researcher "
+                    "profiles..."
+                ),
                 show_time=True,
             ):
                 output = graph.invoke(
                     {
-                        "raw_request": request,
+                        "raw_request": (
+                            request
+                        ),
                     }
                 )
 
@@ -524,9 +432,7 @@ if submitted:
                 "Search failed."
             )
 
-            st.exception(
-                exc
-            )
+            st.exception(exc)
 
         else:
             st.session_state[
@@ -562,13 +468,13 @@ if response is not None:
             )
 
             st.caption(
-                f"Search completed in "
+                "Search completed in "
                 f"{minutes}m {seconds}s"
             )
 
         else:
             st.caption(
-                f"Search completed in "
+                "Search completed in "
                 f"{elapsed_seconds:.1f}s"
             )
 
