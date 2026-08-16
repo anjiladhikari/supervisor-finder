@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from groq import RateLimitError
 import logging
 from dataclasses import dataclass
 
@@ -103,6 +103,7 @@ class ResearcherExtractionOutcome:
     candidates: tuple[ResearcherCandidate, ...]
     attempted_documents: int
     failed_documents: int
+    rate_limited: bool = False
 
 
 _RESEARCHER_EXTRACTION_SYSTEM_PROMPT = """
@@ -243,8 +244,6 @@ def extract_researchers_from_document(
         )
 
     return candidates
-
-
 def extract_researcher_documents(
     documents: list[DownloadedWebPage],
     model: BaseChatModel,
@@ -253,22 +252,46 @@ def extract_researcher_documents(
 
     candidates: list[ResearcherCandidate] = []
     failed_documents = 0
+    attempted_documents = 0
+    rate_limited = False
 
     for document in documents:
+        attempted_documents += 1
+
         try:
-            document_candidates = extract_researchers_from_document(
-                document=document,
-                model=model,
+            document_candidates = (
+                extract_researchers_from_document(
+                    document=document,
+                    model=model,
+                )
             )
+
+        except RateLimitError:
+            logger.warning(
+                "Groq rate limit reached. "
+                "Stopping researcher extraction."
+            )
+
+            failed_documents += 1
+            rate_limited = True
+            break
+
         except Exception:
-            logger.exception("Researcher extraction failed for one document.")
+            logger.exception(
+                "Researcher extraction failed "
+                "for one document."
+            )
+
             failed_documents += 1
             continue
 
-        candidates.extend(document_candidates)
+        candidates.extend(
+            document_candidates
+        )
 
     return ResearcherExtractionOutcome(
         candidates=tuple(candidates),
-        attempted_documents=len(documents),
+        attempted_documents=attempted_documents,
         failed_documents=failed_documents,
+        rate_limited=rate_limited,
     )
