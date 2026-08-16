@@ -1116,7 +1116,7 @@ def score_relevance(
 
     profiles = list(
         state.get(
-            "organised_results",
+            "verified_results",
             [],
         )
     )
@@ -1124,8 +1124,12 @@ def score_relevance(
     if not profiles:
         return {
             "scored_results": [],
-            "warnings": [("No organised researchers were available for relevance scoring.")],
-            "execution_log": [("Relevance scoring completed: 0 researchers scored.")],
+            "warnings": [
+                "No verified researchers were available for relevance scoring."
+            ],
+            "execution_log": [
+                "Relevance scoring completed: 0 researchers scored."
+            ],
         }
 
     request = state.get("request")
@@ -1133,8 +1137,12 @@ def score_relevance(
     if request is None:
         return {
             "scored_results": [],
-            "errors": [("Relevance scoring requires a validated search request.")],
-            "execution_log": ["Relevance scoring failed."],
+            "errors": [
+                "Relevance scoring requires a validated search request."
+            ],
+            "execution_log": [
+                "Relevance scoring failed."
+            ],
         }
 
     expanded_topics = list(
@@ -1146,17 +1154,19 @@ def score_relevance(
 
     scored_results = score_researcher_profiles(
         profiles,
-        research_topic=(request.research_topic),
+        research_topic=request.research_topic,
         expanded_topics=expanded_topics,
     )
 
     return {
         "scored_results": scored_results,
         "execution_log": [
-            (f"Relevance scoring completed: {len(scored_results)} researchers scored.")
+            (
+                "Relevance scoring completed: "
+                f"{len(scored_results)} researchers scored."
+            )
         ],
     }
-
 
 def rank_results(
     state: ResearchGraphState,

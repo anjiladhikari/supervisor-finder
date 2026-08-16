@@ -7,7 +7,6 @@ import streamlit as st
 
 from research_finder.graph import graph
 
-
 AUSTRALIAN_STATES = [
     "All Australia",
     "Australian Capital Territory",

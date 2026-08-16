@@ -9,7 +9,6 @@ from research_finder.verification import (
     VerifiedResearcherCandidate,
 )
 
-
 _STOP_WORDS = {
     "a",
     "an",
@@ -230,10 +229,10 @@ def score_researcher_profile(
 
     if semantic_topic:
         explanation.append(
-            (
+            
                 "Best related topic: "
                 f"{semantic_topic}."
-            )
+            
         )
 
     return ScoredResearcherProfile(
