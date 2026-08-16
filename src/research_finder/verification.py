@@ -8,8 +8,11 @@ from pydantic import Field, HttpUrl
 
 from research_finder.models import StrictModel
 from research_finder.researcher_details import (
-    EnrichedResearcherCandidate,
+    
     ResearchEvidenceItem,
+)
+from research_finder.researcher_extraction import (
+    ResearcherCandidate,
 )
 from research_finder.search_queries import (
     SearchTarget,
@@ -18,11 +21,8 @@ from research_finder.web_content import (
     DownloadedWebPage,
 )
 
-
 class VerifiedResearcherCandidate(StrictModel):
-    """Researcher whose official affiliation was verified."""
-
-    candidate: EnrichedResearcherCandidate
+    candidate: ResearcherCandidate
 
     affiliation_source_url: HttpUrl
 
@@ -33,7 +33,6 @@ class VerifiedResearcherCandidate(StrictModel):
     verified_source_count: int = Field(
         ge=1,
     )
-
 
 @dataclass(frozen=True)
 class VerificationOutcome:
@@ -113,7 +112,7 @@ def _find_document(
 
 
 def _verify_researcher_profile(
-    candidate: EnrichedResearcherCandidate,
+    candidate: ResearcherCandidate,
     documents: list[DownloadedWebPage],
 ) -> DownloadedWebPage | None:
     """Verify researcher evidence against official profile."""
@@ -203,7 +202,7 @@ def _verify_evidence_item(
 
 
 def _verify_public_email(
-    candidate: EnrichedResearcherCandidate,
+    candidate: ResearcherCandidate,
     documents: list[DownloadedWebPage],
 ) -> bool:
     """Verify public email using downloaded evidence."""
@@ -214,7 +213,7 @@ def _verify_public_email(
     if candidate.public_email_source_url is None:
         return False
 
-    researcher = candidate.researcher
+    researcher = candidate
 
     email = str(
         candidate.public_email
@@ -261,7 +260,7 @@ def _verify_public_email(
 
 def verify_researcher_candidates(
     candidates: list[
-        EnrichedResearcherCandidate
+        ResearcherCandidate
     ],
     documents: list[DownloadedWebPage],
 ) -> VerificationOutcome:
@@ -286,7 +285,7 @@ def verify_researcher_candidates(
             rejected_candidates += 1
             continue
 
-        researcher = candidate.researcher
+        researcher = candidate
 
         if _verify_public_email(
             candidate,
