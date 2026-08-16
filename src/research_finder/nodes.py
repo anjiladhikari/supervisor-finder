@@ -1,3 +1,5 @@
+from _pytest import outcomes
+
 from pydantic import ValidationError
 from research_finder.scholar import (
     find_google_scholar_profile,
@@ -1122,6 +1124,11 @@ def _ranked_result_to_output(
     researcher = (
         verified.candidate
     )
+    "google_scholar_url": (
+    str(scored.google_scholar_url)
+    if scored.google_scholar_url
+    else None
+),
 
     return {
         "rank": ranked.rank,

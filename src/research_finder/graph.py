@@ -16,6 +16,7 @@ from research_finder.nodes import (
     search_researchers,
     validate_input,
     verify_current_affiliation,
+    find_scholar_profiles,
 )
 from research_finder.routes import (
     route_after_researcher_search,
@@ -70,6 +71,9 @@ def build_research_graph():
     )
  
     builder.add_node("score_relevance", score_relevance)
+    builder.add_node("find_scholar_profiles", find_scholar_profiles)
+    builder.add_edge("score_relevance", "find_scholar_profiles")
+    builder.add_edge("find_scholar_profiles", "remove_duplicates")
     builder.add_node("remove_duplicates", remove_duplicates)
 
 
