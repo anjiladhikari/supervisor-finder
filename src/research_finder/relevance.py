@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field
-
+from pydantic import Field, HttpUrl
 from research_finder.models import StrictModel
 from research_finder.verification import (
     VerifiedResearcherCandidate,
@@ -65,6 +64,8 @@ class ScoredResearcherProfile(StrictModel):
         default_factory=list,
         max_length=5,
     )
+
+    google_scholar_url: HttpUrl | None = None
 
 
 def _normalise(value: str) -> str:
