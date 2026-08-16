@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import re
-from research_finder.research_projects import (
-    ResearchProjectLink,
-)
+
 from pydantic import Field, HttpUrl
+
 from research_finder.models import StrictModel
+from research_finder.research_projects import (
+    ResearchDegreePortal,
+)
 from research_finder.verification import (
     VerifiedResearcherCandidate,
 )
+
 
 _STOP_WORDS = {
     "a",
@@ -31,16 +34,22 @@ _STOP_WORDS = {
     "with",
 }
 
-_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+_TOKEN_PATTERN = re.compile(
+    r"[a-z0-9]+"
+)
 
 KEYWORD_WEIGHT = 0.70
 SEMANTIC_WEIGHT = 0.30
 
 
-class ScoredResearcherProfile(StrictModel):
-    """Verified researcher with topic-match score."""
+class ScoredResearcherProfile(
+    StrictModel
+):
+    """Verified researcher with topic-match score and links."""
 
-    verified_researcher: VerifiedResearcherCandidate
+    verified_researcher: (
+        VerifiedResearcherCandidate
+    )
 
     relevance_score: int = Field(
         ge=0,
@@ -67,24 +76,30 @@ class ScoredResearcherProfile(StrictModel):
         max_length=5,
     )
 
-    google_scholar_url: HttpUrl | None = None
-    research_degree_projects: list[
-    ResearchProjectLink
-] = Field(
-    default_factory=list,
-)
+    google_scholar_url: (
+        HttpUrl | None
+    ) = None
+
+    research_degree_portal: (
+        ResearchDegreePortal | None
+    ) = None
 
 
-def _normalise(value: str) -> str:
+def _normalise(
+    value: str,
+) -> str:
     return " ".join(
         value.casefold().split()
     )
 
 
-def _tokenise(value: str) -> set[str]:
+def _tokenise(
+    value: str,
+) -> set[str]:
     return {
         token
-        for token in _TOKEN_PATTERN.findall(
+        for token
+        in _TOKEN_PATTERN.findall(
             value.casefold()
         )
         if (
@@ -97,26 +112,41 @@ def _tokenise(value: str) -> set[str]:
 def _topic_match_score(
     topic: str,
     interest: str,
-) -> tuple[int, set[str]]:
+) -> tuple[
+    int,
+    set[str],
+]:
     """Compare one topic with one official research interest."""
 
-    normalised_topic = _normalise(topic)
-    normalised_interest = _normalise(interest)
+    normalised_topic = (
+        _normalise(topic)
+    )
+
+    normalised_interest = (
+        _normalise(interest)
+    )
 
     if not normalised_topic:
         return 0, set()
 
-    # Exact phrase match is strongest.
     if (
         normalised_topic
         == normalised_interest
         or normalised_topic
         in normalised_interest
     ):
-        return 100, _tokenise(topic)
+        return (
+            100,
+            _tokenise(topic),
+        )
 
-    topic_tokens = _tokenise(topic)
-    interest_tokens = _tokenise(interest)
+    topic_tokens = (
+        _tokenise(topic)
+    )
+
+    interest_tokens = (
+        _tokenise(interest)
+    )
 
     if not topic_tokens:
         return 0, set()
@@ -138,18 +168,25 @@ def _topic_match_score(
 def _best_match(
     topics: list[str],
     interests: list[str],
-) -> tuple[int, set[str], str | None]:
+) -> tuple[
+    int,
+    set[str],
+    str | None,
+]:
+    """Find the strongest topic-to-interest match."""
+
     best_score = 0
     best_terms: set[str] = set()
     best_topic: str | None = None
 
     for topic in topics:
         for interest in interests:
-            score, matched = (
-                _topic_match_score(
-                    topic,
-                    interest,
-                )
+            (
+                score,
+                matched,
+            ) = _topic_match_score(
+                topic,
+                interest,
             )
 
             if score > best_score:
@@ -165,33 +202,42 @@ def _best_match(
 
 
 def score_researcher_profile(
-    verified: VerifiedResearcherCandidate,
+    verified: (
+        VerifiedResearcherCandidate
+    ),
     *,
     research_topic: str,
     expanded_topics: list[str],
 ) -> ScoredResearcherProfile:
-    """Combine direct and semantic topic matching."""
+    """Combine direct and related-topic matching."""
 
-    candidate = verified.candidate
+    candidate = (
+        verified.candidate
+    )
 
     interests = (
         candidate.research_interests
     )
 
-    keyword_score, keyword_terms, _ = (
-        _best_match(
-            [research_topic],
-            interests,
-        )
+    (
+        keyword_score,
+        keyword_terms,
+        _,
+    ) = _best_match(
+        [research_topic],
+        interests,
     )
 
-    original_topic = _normalise(
-        research_topic
+    original_topic = (
+        _normalise(
+            research_topic
+        )
     )
 
     semantic_topics = [
         topic
-        for topic in expanded_topics
+        for topic
+        in expanded_topics
         if (
             _normalise(topic)
             != original_topic
@@ -226,21 +272,21 @@ def score_researcher_profile(
 
     explanation = [
         (
-            f"Direct topic match: "
+            "Direct topic match: "
             f"{keyword_score}/100."
         ),
         (
-            f"Semantic related-topic match: "
+            "Related-topic match: "
             f"{semantic_score}/100."
         ),
     ]
 
     if semantic_topic:
         explanation.append(
-            
+            (
                 "Best related topic: "
                 f"{semantic_topic}."
-            
+            )
         )
 
     return ScoredResearcherProfile(
@@ -270,7 +316,11 @@ def score_researcher_profiles(
     *,
     research_topic: str,
     expanded_topics: list[str],
-) -> list[ScoredResearcherProfile]:
+) -> list[
+    ScoredResearcherProfile
+]:
+    """Score all verified researchers."""
+
     return [
         score_researcher_profile(
             researcher,
@@ -281,5 +331,6 @@ def score_researcher_profiles(
                 expanded_topics
             ),
         )
-        for researcher in researchers
+        for researcher
+        in researchers
     ]
