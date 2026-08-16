@@ -1,4 +1,3 @@
-from bs4 import builder
 from __future__ import annotations
 
 from langgraph.graph import (
@@ -12,6 +11,7 @@ from research_finder.nodes import (
     download_webpage_content,
     expand_research_topic,
     extract_researcher_information,
+    find_research_projects,
     find_scholar_profiles,
     find_universities,
     generate_final_output,
@@ -24,7 +24,6 @@ from research_finder.nodes import (
     search_researchers,
     validate_input,
     verify_current_affiliation,
-    find_research_projects,
 )
 from research_finder.routes import (
     route_after_researcher_search,
@@ -48,41 +47,33 @@ def build_research_graph():
         output_schema=ResearchGraphOutput,
     )
 
-    # Core workflow nodes.
+    # Core workflow.
     builder.add_node(
         "initialize_workflow",
         initialize_workflow,
     )
-
     builder.add_node(
         "validate_input",
         validate_input,
     )
     builder.add_node(
-    "find_research_projects",
-    find_research_projects,
-)
-    builder.add_node(
         "expand_research_topic",
         expand_research_topic,
     )
-
     builder.add_node(
         "find_universities",
         find_universities,
     )
-
     builder.add_node(
         "generate_search_queries",
         generate_search_queries,
     )
 
-    # Adaptive search nodes.
+    # Adaptive search.
     builder.add_node(
         "broaden_search",
         broaden_search,
     )
-
     builder.add_node(
         "narrow_search",
         narrow_search,
@@ -93,17 +84,14 @@ def build_research_graph():
         "search_researchers",
         search_researchers,
     )
-
     builder.add_node(
         "download_webpage_content",
         download_webpage_content,
     )
-
     builder.add_node(
         "extract_researcher_information",
         extract_researcher_information,
     )
-
     builder.add_node(
         "verify_current_affiliation",
         verify_current_affiliation,
@@ -114,22 +102,24 @@ def build_research_graph():
         "score_relevance",
         score_relevance,
     )
-
     builder.add_node(
         "find_scholar_profiles",
         find_scholar_profiles,
     )
+    builder.add_node(
+        "find_research_projects",
+        find_research_projects,
+    )
 
+    # Final processing.
     builder.add_node(
         "remove_duplicates",
         remove_duplicates,
     )
-
     builder.add_node(
         "rank_results",
         rank_results,
     )
-
     builder.add_node(
         "generate_final_output",
         generate_final_output,
@@ -140,37 +130,34 @@ def build_research_graph():
         START,
         "initialize_workflow",
     )
-
     builder.add_edge(
         "initialize_workflow",
         "validate_input",
     )
 
-    # Validation routing.
+    # Validation.
     builder.add_conditional_edges(
         "validate_input",
         route_after_validation,
     )
 
-    # Topic -> universities.
+    # Topic and university discovery.
     builder.add_edge(
         "expand_research_topic",
         "find_universities",
     )
-
-    # University discovery routing.
     builder.add_conditional_edges(
         "find_universities",
         route_after_university_discovery,
     )
 
-    # Search query routing.
+    # Search queries.
     builder.add_conditional_edges(
         "generate_search_queries",
         route_after_search_query_generation,
     )
 
-    # Researcher search routing.
+    # Researcher search.
     builder.add_conditional_edges(
         "search_researchers",
         route_after_researcher_search,
@@ -181,18 +168,16 @@ def build_research_graph():
         "broaden_search",
         "generate_search_queries",
     )
-
     builder.add_edge(
         "narrow_search",
         "generate_search_queries",
     )
 
-    # Researcher profile processing.
+    # Researcher processing.
     builder.add_edge(
         "download_webpage_content",
         "extract_researcher_information",
     )
-
     builder.add_edge(
         "extract_researcher_information",
         "verify_current_affiliation",
@@ -204,32 +189,31 @@ def build_research_graph():
         "score_relevance",
     )
 
-    # Google Scholar discovery.
+    # Google Scholar.
     builder.add_edge(
         "score_relevance",
         "find_scholar_profiles",
     )
 
+    # Same-university research projects.
     builder.add_edge(
         "find_scholar_profiles",
         "find_research_projects",
     )
 
+    # Rank and output.
     builder.add_edge(
-    "find_research_projects",
-    "remove_duplicates",
-)
-
+        "find_research_projects",
+        "remove_duplicates",
+    )
     builder.add_edge(
         "remove_duplicates",
         "rank_results",
     )
-
     builder.add_edge(
         "rank_results",
         "generate_final_output",
     )
-
     builder.add_edge(
         "generate_final_output",
         END,
