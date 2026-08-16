@@ -1,7 +1,6 @@
 from pydantic import ValidationError
 
 from research_finder.deduplication import (
-    deduplicate_by_source_url,
     deduplicate_scored_researchers,
 )
 from research_finder.llm import create_chat_model
@@ -980,63 +979,7 @@ def organise_researcher_profiles(
 def remove_duplicates(
     state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Deduplicate researchers and source pages."""
-
-    result: dict[str, object] = {}
-
-    page_keys = (
-        "researcher_pages",
-        "lab_pages",
-        "project_pages",
-        "publication_pages",
-    )
-
-    seen_page_urls: set[str] = set()
-    removed_pages = 0
-
-    for page_key in page_keys:
-        pages = list(
-            state.get(
-                page_key,
-                [],
-            )
-        )
-
-        unique_pages, removed = deduplicate_by_source_url(
-            pages,
-            url_getter=lambda page: str(page.url),
-            seen_keys=seen_page_urls,
-        )
-
-        result[page_key] = unique_pages
-        removed_pages += removed
-
-    document_keys = (
-        "researcher_documents",
-        "lab_documents",
-        "project_documents",
-        "publication_documents",
-    )
-
-    seen_document_urls: set[str] = set()
-    removed_documents = 0
-
-    for document_key in document_keys:
-        documents = list(
-            state.get(
-                document_key,
-                [],
-            )
-        )
-
-        unique_documents, removed = deduplicate_by_source_url(
-            documents,
-            url_getter=lambda document: str(document.final_url),
-            seen_keys=(seen_document_urls),
-        )
-
-        result[document_key] = unique_documents
-        removed_documents += removed
+    """Remove duplicate researcher results."""
 
     scored_results = list(
         state.get(
@@ -1046,68 +989,42 @@ def remove_duplicates(
     )
 
     if not scored_results:
-        result["deduplicated_results"] = []
+        return {
+            "deduplicated_results": [],
+            "execution_log": [
+                (
+                    "Deduplication completed: "
+                    "0 researchers."
+                )
+            ],
+        }
 
-        result["execution_log"] = [
+    deduplicated = (
+        deduplicate_scored_researchers(
+            scored_results
+        )
+    )
+
+    removed = (
+        len(scored_results)
+        - len(deduplicated)
+    )
+
+    return {
+        "deduplicated_results": (
+            deduplicated
+        ),
+        "execution_log": [
             (
                 "Deduplication completed: "
-                "0 scored researchers -> "
-                "0 unique researchers; "
-                f"{removed_pages} duplicate "
-                "source pages and "
-                f"{removed_documents} duplicate "
-                "documents removed."
+                f"{len(scored_results)} scored "
+                "researchers -> "
+                f"{len(deduplicated)} unique "
+                f"researchers; {removed} "
+                "duplicates removed."
             )
-        ]
-
-        return result
-
-    request = state.get("request")
-
-    if request is None:
-        result["deduplicated_results"] = []
-
-        result["errors"] = [("Researcher deduplication requires a validated search request.")]
-
-        result["execution_log"] = ["Deduplication failed."]
-
-        return result
-
-    expanded_topics = list(
-        state.get(
-            "expanded_topics",
-            [],
-        )
-    )
-
-    deduplicated = deduplicate_scored_researchers(
-        scored_results,
-        research_topic=(request.research_topic),
-        expanded_topics=(expanded_topics),
-    )
-
-    result["deduplicated_results"] = deduplicated
-
-    duplicate_researchers = len(scored_results) - len(deduplicated)
-
-    result["execution_log"] = [
-        (
-            "Deduplication completed: "
-            f"{len(scored_results)} scored "
-            "researchers -> "
-            f"{len(deduplicated)} unique "
-            "researchers; "
-            f"{duplicate_researchers} duplicate "
-            "researchers merged, "
-            f"{removed_pages} duplicate source "
-            "pages and "
-            f"{removed_documents} duplicate "
-            "documents removed."
-        )
-    ]
-
-    return result
-
+        ],
+    }
 
 def score_relevance(
     state: ResearchGraphState,
@@ -1228,17 +1145,17 @@ def rank_results(
 def _ranked_result_to_output(
     ranked: RankedResearcherProfile,
 ) -> dict[str, object]:
-    """Flatten one ranked researcher for the website."""
+    """Flatten one researcher for the UI."""
 
     scored = ranked.result
-    profile = scored.profile
 
     verified = (
-        profile.verified_researcher
+        scored.verified_researcher
     )
 
-    candidate = verified.candidate
-    researcher = candidate.researcher
+    researcher = (
+        verified.candidate
+    )
 
     return {
         "rank": ranked.rank,
@@ -1262,54 +1179,19 @@ def _ranked_result_to_output(
         ),
 
         "research_interests": list(
-            profile.research_interests
+            researcher.research_interests
         ),
-
-        "labs": [
-            _evidence_item_to_output(
-                item
-            )
-            for item in candidate.labs
-        ],
-
-        "current_projects": [
-            _evidence_item_to_output(
-                item
-            )
-            for item
-            in profile.current_projects
-        ],
-
-        "previous_projects": [
-            _evidence_item_to_output(
-                item
-            )
-            for item
-            in profile.previous_projects
-        ],
-
-        "unknown_projects": [
-            _evidence_item_to_output(
-                item
-            )
-            for item
-            in profile.unknown_projects
-        ],
-
-        "publications": [
-            _evidence_item_to_output(
-                item
-            )
-            for item
-            in candidate.publications
-        ],
 
         "relevance_score": (
             scored.relevance_score
         ),
 
-        "score_breakdown": (
-            scored.breakdown.model_dump()
+        "keyword_score": (
+            scored.keyword_score
+        ),
+
+        "semantic_score": (
+            scored.semantic_score
         ),
 
         "matched_terms": list(
@@ -1324,20 +1206,14 @@ def _ranked_result_to_output(
             researcher.source_url
         ),
 
-        "public_email": (
-            str(candidate.public_email)
-            if candidate.public_email
-            is not None
-            else None
-        ),
-
         "verified": True,
 
         "verified_at": (
-            verified.verified_at.isoformat()
+            verified
+            .verified_at
+            .isoformat()
         ),
     }
-
 def generate_final_output(
     state: ResearchGraphState,
 ) -> dict[str, object]:

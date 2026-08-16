@@ -11,7 +11,6 @@ from research_finder.relevance import (
     ScoredResearcherProfile,
 )
 
-
 _TRACKING_PARAMETERS = {
     "fbclid",
     "gclid",
