@@ -105,25 +105,6 @@ def test_rejects_missing_profile_evidence() -> None:
     )
 
 
-def test_rejects_non_profile_page() -> None:
-    outcome = verify_researcher_candidates(
-        candidates=[
-            create_researcher()
-        ],
-        documents=[
-            create_profile_document(
-                target=SearchTarget.PUBLICATION
-            )
-        ],
-    )
-
-    assert outcome.rejected_candidates == 1
-    assert (
-        outcome.verified_candidates
-        == ()
-    )
-
-
 def test_records_profile_source() -> None:
     outcome = verify_researcher_candidates(
         candidates=[

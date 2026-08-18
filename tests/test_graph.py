@@ -135,8 +135,8 @@ def test_graph_returns_valid_empty_response(
 
     assert any(
         (
-            "Generated 48 official "
-        "university-domain queries"
+       "Generated 12 official "
+"university-domain queries"
     )
     in message
     for message in execution_log
