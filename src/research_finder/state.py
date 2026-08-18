@@ -14,12 +14,6 @@ from research_finder.ranking import (
 from research_finder.relevance import (
     ScoredResearcherProfile,
 )
-from research_finder.research_profile import (
-    OrganisedResearcherProfile,
-)
-from research_finder.researcher_details import (
-    EnrichedResearcherCandidate,
-)
 from research_finder.researcher_extraction import (
     ResearcherCandidate,
 )
@@ -29,7 +23,9 @@ from research_finder.search_queries import (
 from research_finder.search_strategy import (
     SearchMode,
 )
-from research_finder.university_directory import UniversityRecord
+from research_finder.university_directory import (
+    UniversityRecord,
+)
 from research_finder.verification import (
     VerifiedResearcherCandidate,
 )
@@ -39,16 +35,12 @@ from research_finder.web_content import (
 
 
 class WorkflowMessages(TypedDict, total=False):
-    """Append-only messages shared by internal and output state."""
-
     errors: Annotated[list[str], add]
     warnings: Annotated[list[str], add]
     execution_log: Annotated[list[str], add]
 
 
 class ResearchGraphInput(TypedDict):
-    """Information accepted when the graph is invoked."""
-
     raw_request: dict[str, object]
 
 
@@ -56,14 +48,13 @@ class ResearchGraphOutput(
     WorkflowMessages,
     total=False,
 ):
-    """Information returned after the graph finishes."""
-
     final_response: dict[str, object] | None
 
 
-class ResearchGraphState(WorkflowMessages, total=False):
-    """Internal shared state used by workflow nodes."""
-
+class ResearchGraphState(
+    WorkflowMessages,
+    total=False,
+):
     raw_request: dict[str, object]
     request: SearchRequest | None
 
@@ -71,32 +62,23 @@ class ResearchGraphState(WorkflowMessages, total=False):
     expanded_topics: list[str]
 
     candidate_universities: list[UniversityRecord]
-
     search_queries: list[OfficialSearchQuery]
-    researcher_pages: list[OfficialSearchPage]
-    lab_pages: list[OfficialSearchPage]
-    project_pages: list[OfficialSearchPage]
-    publication_pages: list[OfficialSearchPage]
 
+    researcher_pages: list[OfficialSearchPage]
     researcher_documents: list[DownloadedWebPage]
-    lab_documents: list[DownloadedWebPage]
-    project_documents: list[DownloadedWebPage]
-    publication_documents: list[DownloadedWebPage]
 
     extracted_candidates: list[ResearcherCandidate]
-
-    enriched_candidates: list[EnrichedResearcherCandidate]
-
     verified_results: list[VerifiedResearcherCandidate]
-    organised_results: list[OrganisedResearcherProfile]
 
     scored_results: list[ScoredResearcherProfile]
     deduplicated_results: list[ScoredResearcherProfile]
     ranked_results: list[RankedResearcherProfile]
+
     search_mode: SearchMode
     search_round: int
     active_search_topics: list[str]
 
     search_attempt_count: int
     download_attempt_count: int
+
     final_response: dict[str, object] | None
