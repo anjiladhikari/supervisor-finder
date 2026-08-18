@@ -190,10 +190,9 @@ def test_node_stores_extracted_candidates(
     )
 
     assert len(result["extracted_candidates"]) == 1
-
     assert result["execution_log"] == [
-        ("Researcher extraction completed: 1 documents processed, 1 candidates created.")
-    ]
+    "Researcher extraction completed: 1 documents processed, 1 candidates retained."
+]
 
 
 def test_node_handles_missing_documents() -> None:

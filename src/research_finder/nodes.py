@@ -987,7 +987,7 @@ def rank_results(
     )
 
     excluded_results = len(results) - len(
-        [result for result in results if result.relevance_score > 0]
+        [result for result in results if result.relevance_score >= 40]
     )
 
     response: dict[str, object] = {
@@ -1005,7 +1005,7 @@ def rank_results(
 
     if excluded_results:
         response["warnings"] = [
-            (f"{excluded_results} researchers were excluded because their relevance score was 0.")
+            f"{excluded_results} researchers were excluded because their relevance score was below 40."
         ]
 
     return response

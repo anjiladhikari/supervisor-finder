@@ -8,7 +8,7 @@ from research_finder.models import (
 from research_finder.relevance import (
     ScoredResearcherProfile,
 )
-
+MIN_RELEVANCE_SCORE = 40
 
 class RankedResearcherProfile(
     StrictModel
@@ -70,7 +70,7 @@ def rank_researcher_results(
     relevant = [
         result
         for result in results
-        if result.relevance_score > 0
+        if result.relevance_score >=MIN_RELEVANCE_SCORE
     ]
 
     ordered = sorted(
