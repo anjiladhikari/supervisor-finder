@@ -323,114 +323,44 @@ def generate_search_queries(
     ],
 }
 
-_PAGE_STATE_KEYS = {
-    SearchTarget.RESEARCHER: "researcher_pages",
-    SearchTarget.LAB: "lab_pages",
-    SearchTarget.PROJECT: "project_pages",
-    SearchTarget.PUBLICATION: "publication_pages",
-}
-
-_PAGE_LABELS = {
-    SearchTarget.RESEARCHER: "Researcher",
-    SearchTarget.LAB: "Research-lab",
-    SearchTarget.PROJECT: "Research-project",
-    SearchTarget.PUBLICATION: "Publication",
-}
 
 
-
-
-
-def _search_official_pages(
+def search_researchers(
     state: ResearchGraphState,
-    target: SearchTarget,
 ) -> dict[str, object]:
-    """Execute all official queries for one target."""
+    """Search official researcher-profile pages."""
 
-    search_queries = state.get(
-        "search_queries",
-        [],
-    )
-
-    # First select queries for this target.
-    target_queries = [
-        search_query
-        for search_query in search_queries
-        if search_query.target == target
+    search_queries = [
+        query
+        for query in state.get(
+            "search_queries",
+            [],
+        )
+        if query.target == SearchTarget.RESEARCHER
     ]
 
-    # Speed optimisation:
-    # after researcher search, only search labs/projects/publications
-    # for universities where a researcher page was found.
-    if target != SearchTarget.RESEARCHER:
-        researcher_universities = {
-            page.university_name
-            for page in state.get(
-                "researcher_pages",
-                [],
-            )
-        }
-
-        target_queries = [
-            search_query
-            for search_query in target_queries
-            if search_query.university_name
-            in researcher_universities
-        ]
-
-    state_key = _PAGE_STATE_KEYS[target]
-    label = _PAGE_LABELS[target]
-
-    if not target_queries:
+    if not search_queries:
         return {
-            state_key: [],
+            "researcher_pages": [],
             "errors": [
-                (
-                    f"No {target.value} search "
-                    "queries were available."
-                )
+                "No researcher search queries were available."
             ],
             "execution_log": [
-                f"{label} search failed."
+                "Researcher search failed."
             ],
         }
 
     client = create_search_client()
 
-    
-
-
-
-
     outcome = execute_official_searches(
-        search_queries=target_queries,
-        target=target,
+        search_queries=search_queries,
+        target=SearchTarget.RESEARCHER,
         client=client,
         max_results_per_query=1,
-       
-)
-
-    warnings: list[str] = []
-
-    if outcome.failed_queries:
-        warnings.append(
-            
-                f"{label} search failed for "
-                f"{outcome.failed_queries} of "
-                f"{outcome.attempted_queries} queries."
-            
-        )
-
-    if not outcome.pages:
-        warnings.append(
-            
-                f"No official {target.value} "
-                "pages were found."
-            
-        )
+    )
 
     result: dict[str, object] = {
-        state_key: list(
+        "researcher_pages": list(
             outcome.pages
         ),
         "search_attempt_count": (
@@ -442,21 +372,33 @@ def _search_official_pages(
         ),
         "execution_log": [
             (
-                f"{label} search completed: "
-                f"{outcome.attempted_queries} queries "
-                f"attempted, "
-                f"{len(outcome.pages)} official "
-                "pages found."
+                "Researcher search completed: "
+                f"{outcome.attempted_queries} queries attempted, "
+                f"{len(outcome.pages)} official pages found."
             )
         ],
     }
+
+    warnings: list[str] = []
+
+    if outcome.failed_queries:
+        warnings.append(
+            (
+                "Researcher search failed for "
+                f"{outcome.failed_queries} of "
+                f"{outcome.attempted_queries} queries."
+            )
+        )
+
+    if not outcome.pages:
+        warnings.append(
+            "No official researcher pages were found."
+        )
 
     if warnings:
         result["warnings"] = warnings
 
     return result
-
-
 def broaden_search(
     state: ResearchGraphState,
 ) -> dict[str, object]:
