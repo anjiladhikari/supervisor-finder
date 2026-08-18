@@ -722,15 +722,41 @@ def extract_researcher_information(
         model=model,
     )
 
+    candidates = list(outcome.candidates)
+
+    request = state.get("request")
+
+    if request is not None:
+        filtered_candidates = []
+
+        for candidate in candidates:
+            if (
+                candidate.profile_country
+                and candidate.profile_country.casefold()
+                != request.country.casefold()
+            ):
+                continue
+
+            if (
+                request.state
+                and candidate.profile_state
+                and candidate.profile_state.casefold()
+                != request.state.casefold()
+            ):
+                continue
+
+            filtered_candidates.append(candidate)
+
+        candidates = filtered_candidates
+
     result: dict[str, object] = {
-        "extracted_candidates": list(outcome.candidates),
+        "extracted_candidates": candidates,
         "execution_log": [
             (
                 "Researcher extraction completed: "
                 f"{outcome.attempted_documents} "
                 "documents processed, "
-                f"{len(outcome.candidates)} "
-                "candidates created."
+                f"{len(candidates)} candidates retained."
             )
         ],
     }

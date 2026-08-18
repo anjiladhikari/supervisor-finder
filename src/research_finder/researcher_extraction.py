@@ -261,16 +261,19 @@ def extract_researchers_from_document(
 
         candidates.append(
             ResearcherCandidate(
-                full_name=researcher.full_name,
-                academic_title=(researcher.academic_title),
-                role=researcher.role,
-                research_interests=(researcher.research_interests),
-                profile_summary=(researcher.profile_summary),
-                university_name=(document.university_name),
-                official_domain=(document.official_domain),
-                source_url=document.final_url,
-                source_title=document.page_title,
-                evidence_text=(researcher.evidence_text),
+    full_name=researcher.full_name,
+    academic_title=researcher.academic_title,
+    role=researcher.role,
+    research_interests=researcher.research_interests,
+    profile_summary=researcher.profile_summary,
+
+    profile_state=researcher.profile_state,
+    profile_country=researcher.profile_country,
+
+    university_name=document.university_name,
+    official_domain=document.official_domain,
+    source_url=document.url,
+    evidence_text=researcher.evidence_text,
             )
         )
 
