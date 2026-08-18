@@ -1,4 +1,4 @@
-from _pytest import outcomes
+
 
 from pydantic import ValidationError
 from research_finder.scholar import (
@@ -31,9 +31,7 @@ from research_finder.relevance import (
 )
 
 
-from research_finder.researcher_extraction import (
-    extract_researcher_documents,
-)
+
 from research_finder.search_queries import (
     SearchTarget,
     generate_official_search_queries,
@@ -585,37 +583,7 @@ def search_researchers(
     )
 
 
-def search_labs(
-    state: ResearchGraphState,
-) -> dict[str, object]:
-    """Search official research-lab pages."""
 
-    return _search_official_pages(
-        state,
-        SearchTarget.LAB,
-    )
-
-
-def search_projects(
-    state: ResearchGraphState,
-) -> dict[str, object]:
-    """Search official research-project pages."""
-
-    return _search_official_pages(
-        state,
-        SearchTarget.PROJECT,
-    )
-
-
-def search_publications(
-    state: ResearchGraphState,
-) -> dict[str, object]:
-    """Search official publication pages."""
-
-    return _search_official_pages(
-        state,
-        SearchTarget.PUBLICATION,
-    )
 
 
 def download_webpage_content(
@@ -722,7 +690,22 @@ def extract_researcher_information(
         model=model,
     )
 
-    candidates = list(outcome.candidates)
+    result: dict[str, object] = {
+        "extracted_candidates": list(candidates),
+        "execution_log": [
+            (
+                "Researcher extraction completed: "
+                f"{outcome.attempted_documents} "
+                "documents processed, "
+                f"{len(candidates)} candidates retained."
+                "candidates created."
+            )
+        ],
+    }
+    
+    candidates = list(
+    outcome.candidates
+)
 
     request = state.get("request")
 
@@ -745,21 +728,11 @@ def extract_researcher_information(
             ):
                 continue
 
-            filtered_candidates.append(candidate)
-
-        candidates = filtered_candidates
-
-    result: dict[str, object] = {
-        "extracted_candidates": candidates,
-        "execution_log": [
-            (
-                "Researcher extraction completed: "
-                f"{outcome.attempted_documents} "
-                "documents processed, "
-                f"{len(candidates)} candidates retained."
+            filtered_candidates.append(
+                candidate
             )
-        ],
-    }
+
+    candidates = filtered_candidates
 
     if outcome.rate_limited:
         result["warnings"] = [
@@ -783,114 +756,6 @@ def extract_researcher_information(
     return result
 
 
-def extract_researcher_details(
-    state: ResearchGraphState,
-) -> dict[str, object]:
-    """Extract labs, projects, publications and emails."""
-
-    candidates = list(
-        state.get(
-            "extracted_candidates",
-            [],
-        )
-    )
-    candidate_domains = {
-    candidate.official_domain.casefold()
-    for candidate in candidates
-}
-
-    if not candidates:
-        return {
-            "enriched_candidates": [],
-            "warnings": [("No researcher candidates were available for detail extraction.")],
-            "execution_log": [
-                (
-                    "Researcher detail extraction completed: "
-                    "0 documents processed, "
-                    "0 researchers enriched."
-                )
-            ],
-        }
-
-    documents = [
-     document
-    for document in [
-        *state.get(
-            "researcher_documents",
-            [],
-        ),
-        *state.get(
-            "lab_documents",
-            [],
-        ),
-        *state.get(
-            "project_documents",
-            [],
-        ),
-        *state.get(
-            "publication_documents",
-            [],
-        ),
-    ]
-    if document.official_domain.casefold()
-    in candidate_domains
-]
-
-    if not documents:
-        enriched = enrich_researcher_candidates(
-            candidates=candidates,
-            associations=[],
-        )
-
-        return {
-            "enriched_candidates": enriched,
-            "warnings": [("No supporting documents were available for researcher details.")],
-            "execution_log": [
-                (
-                    "Researcher detail extraction completed: "
-                    "0 documents processed, "
-                    f"{len(enriched)} researchers enriched."
-                )
-            ],
-        }
-
-    model = create_chat_model()
-
-    outcome = extract_researcher_detail_documents(
-        documents=documents,
-        candidates=candidates,
-        model=model,
-    )
-
-    enriched = enrich_researcher_candidates(
-        candidates=candidates,
-        associations=list(outcome.associations),
-    )
-
-    result: dict[str, object] = {
-        "enriched_candidates": enriched,
-        "execution_log": [
-            (
-                "Researcher detail extraction completed: "
-                f"{outcome.attempted_documents} "
-                "documents processed, "
-                f"{len(enriched)} "
-                "researchers enriched."
-            )
-        ],
-    }
-
-    if outcome.failed_documents:
-        result["warnings"] = [
-            (
-                "Researcher detail extraction failed "
-                f"for {outcome.failed_documents} of "
-                f"{outcome.attempted_documents} "
-                "documents."
-            )
-        ]
-
-    return result
 
 
 def verify_current_affiliation(

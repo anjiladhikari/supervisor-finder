@@ -48,14 +48,18 @@ def create_batch(
         researchers=[
             ResearcherExtractionDraft(
                 full_name="Jane Smith",
-                academic_title="Professor",
-                role="Professor of Artificial Intelligence",
-                research_interests=[
-                    "Reinforcement learning",
-                "Time-series analysis",
-            ],
-            profile_summary="Researcher in artificial intelligence.",
-            evidence_text=evidence_text,
+    academic_title="Professor",
+    role="Professor of Artificial Intelligence",
+    research_interests=[
+        "Reinforcement learning",
+        "Time-series analysis",
+    ],
+    profile_summary="Researcher in artificial intelligence.",
+
+    profile_state="Victoria",
+    profile_country="Australia",
+
+    evidence_text=evidence_text,
         )
     ],
 )
