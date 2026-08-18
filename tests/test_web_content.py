@@ -210,9 +210,6 @@ def test_download_node_stores_documents(
     result = nodes_module.download_webpage_content(
         {
             "researcher_pages": [create_page()],
-            "lab_pages": [],
-            "project_pages": [],
-            "publication_pages": [],
             "download_attempt_count": 0,
         }
     )
