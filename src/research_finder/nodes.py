@@ -356,7 +356,7 @@ def search_researchers(
         search_queries=search_queries,
         target=SearchTarget.RESEARCHER,
         client=client,
-        max_results_per_query=1,
+        max_results_per_query=3,
     )
 
     result: dict[str, object] = {

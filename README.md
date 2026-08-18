@@ -1,334 +1,312 @@
-# Research Supervisor and Lab Finder
+# Australian Researcher Finder
 
-An evidence-based AI workflow for finding Australian university researchers,
-research groups, projects and publications that match a given research topic.
+A LangGraph-based application for finding Australian university researchers who work on a given research topic.
 
----
+The system searches official university websites, extracts researcher information from personal academic profiles, verifies the evidence, scores researchers against the user's topic, and returns ranked results with useful research links.
 
-## What it does
+## Features
 
-Given a research topic and an optional Australian state, the workflow:
+- Search researchers by Australian state and research topic
+- Search only official university domains
+- LLM-based research-topic expansion
+- Personal researcher-profile detection
+- Structured researcher extraction
+- Australian state and country filtering
+- Deterministic profile verification
+- Explainable topic-match scoring
+- Duplicate researcher removal
+- Ranked researcher results
+- Google Scholar profile discovery
+- University PhD / MRes / Masters-by-Research portal discovery
+- Streamlit user interface
+- Groq and Ollama LLM support
+- Graceful handling of partial search/download/LLM failures
 
-1. Validates the user's input
-2. Uses an LLM to expand the topic into related terms, methods, and keywords
-3. Looks up Australian universities from a built-in directory
-4. Generates official university-domain search queries for each search target
-5. Executes web searches restricted to official university domains
-6. Downloads and cleans the discovered pages
-7. Extracts structured researcher information *(not yet implemented)*
-8. Verifies current affiliation *(placeholder)*
-9. Scores, deduplicates and ranks results
-10. Returns a structured `SearchResponse`
+## Example
 
----
+Input:
 
-## Current status
-
-The following pipeline steps are fully implemented and tested:
-
-- [x] Input validation
-- [x] LLM-based topic expansion (Groq or Ollama)
-- [x] Australian university directory lookup
-- [x] Official university-domain search query generation
-- [x] Web search with bounded retries and duplicate removal (DDGS)
-- [x] Official-domain result validation
-- [x] Page download and HTML cleaning (httpx + BeautifulSoup)
-- [x] Structured researcher extraction from downloaded pages (LLM)
-- [x] Researcher detail extraction — emails, labs, projects, publications (LLM)
-- [x] Lightweight affiliation verification (deterministic, no extra LLM calls)
-- [x] Deterministic relevance scoring
-- [x] Partial failure handling at every stage
-- [x] Conditional LangGraph routing
-
-The following steps are still placeholders:
-
-- [ ] Duplicate removal and result ranking
-- [ ] Streamlit user interface
-
----
-
-## Inputs
-
-| Field | Required | Description |
-|---|---|---|
-| `country` | Yes | Must be Australia |
-| `country_code` | Yes | ISO 3166-1 alpha-2, e.g. `AU` |
-| `state` | No | Australian state name, e.g. `Victoria` |
-| `state_code` | No | ISO 3166-2, e.g. `AU-VIC` |
-| `research_topic` | Yes | Free-text topic, 3–300 characters |
-| `max_results` | No | 1–20, default 5 |
-
-State name and state code must both be present or both absent.
-
----
-
-## Planned outputs
-
-Each `ResearcherResult` includes:
-
-- Researcher name and university
-- Research lab or group
-- General research interests
-- Current and previous projects
-- Relevant publications
-- An explainable relevance score (topic similarity, publication relevance,
-  project relevance, lab relevance, evidence strength, recency)
-- Official profile and lab URLs
-- Public university email when verified
-- Verification status and notes
-- Supporting evidence sources with official domain URLs
-
----
-
-## Architecture
-
-### LangGraph workflow
-
+```text
+Country: Australia
+State: Victoria
+Research topic: Machine Learning
+Maximum results: 3
 ```
+
+Example result:
+
+```text
+Researcher: abc
+University: abc University
+
+Research interests:
+Machine Learning
+Artificial Intelligence
+Data Mining
+Reinforcement Learning
+Computer Vision
+
+Topic match: 100/100
+
+Links:
+Official university profile
+Google Scholar
+University research-degree opportunities
+```
+
+## How It Works
+
+```text
 START
-  └─ initialize_workflow
-       └─ validate_input
-            ├─ [invalid] → generate_final_output → END
-            └─ [valid]   → expand_research_topic
-                               └─ find_universities
-                                    ├─ [none found] → generate_final_output → END
-                                    └─ [found]      → generate_search_queries
-                                                          ├─ [no queries] → generate_final_output → END
-                                                          └─ [queries]    → search_researchers
-                                                                                 └─ search_labs
-                                                                                      └─ search_projects
-                                                                                           └─ search_publications
-                                                                                                └─ download_webpage_content
-                                                                                                     └─ extract_researcher_information
-                                                                                                          └─ extract_researcher_details
-                                                                                                               └─ verify_current_affiliation
-                                                                                                                    └─ score_relevance
-                                                                                                                         └─ remove_duplicates
-                                                                                                                              └─ rank_results
-                                                                                                                                   └─ generate_final_output → END
+  ↓
+Initialize workflow
+  ↓
+Validate input
+  ↓
+Expand research topic
+  ↓
+Find universities in selected state
+  ↓
+Generate official-domain researcher queries
+  ↓
+Search researcher profiles
+  ↓
+Download and clean profile pages
+  ↓
+Extract researcher information
+  ↓
+Filter by state / country
+  ↓
+Verify official profile evidence
+  ↓
+Score topic relevance
+  ↓
+Find Google Scholar profile
+  ↓
+Find university research-degree portal
+  ↓
+Remove duplicates
+  ↓
+Rank researchers
+  ↓
+Generate final output
+  ↓
+END
 ```
 
-### Shared state
+LangGraph controls the workflow and conditional search-routing logic.
 
-`ResearchGraphState` carries:
+## Researcher Verification
 
-| Field | Type | Description |
-|---|---|---|
-| `request` | `SearchRequest` | Validated user input |
-| `topic_expansion` | `TopicExpansion` | LLM-expanded topics and keywords |
-| `expanded_topics` | `list[str]` | Ordered, deduplicated search terms |
-| `candidate_universities` | `list[UniversityRecord]` | Matched universities |
-| `search_queries` | `list[OfficialSearchQuery]` | Domain-restricted queries |
-| `researcher_pages` / `lab_pages` / `project_pages` / `publication_pages` | `list[OfficialSearchPage]` | Search result pages per target |
-| `researcher_documents` / `lab_documents` / `project_documents` / `publication_documents` | `list[DownloadedWebPage]` | Cleaned page text per target |
-| `extracted_candidates` | `list[ResearcherCandidate]` | Candidates from researcher pages |
-| `enriched_candidates` | `list[EnrichedResearcherCandidate]` | Candidates with emails, labs, projects, publications attached |
-| `verified_results` | `list[VerifiedResearcherCandidate]` | Candidates that passed deterministic verification |
-| `scored_results` / `deduplicated_results` / `ranked_results` | `list[ResearcherResult]` | Intermediate result lists |
-| `errors` / `warnings` / `execution_log` | `list[str]` | Append-only message lists |
+A researcher is accepted only when the system can verify the researcher against the downloaded official university profile.
 
----
+Verification checks that:
 
-## Lightweight researcher verification
+- the profile belongs to the university's official domain
+- the downloaded page matches the researcher's profile URL
+- the researcher's name appears on the page
+- the extracted evidence exists in the original page
+- the page represents a researcher profile rather than a publication, project, directory, news page or author list
 
-The workflow performs deterministic verification using the official
-university pages already downloaded during discovery.
+The extraction stage also captures the researcher's current country and Australian state when the official profile provides that information.
 
-A researcher is retained only when:
+This prevents researchers from overseas campuses being returned for the wrong Australian state.
 
-- Their profile source belongs to the official university domain
-- The downloaded profile contains their name
-- Their extraction evidence exists in the downloaded page
+## Topic Match Scoring
 
-Research labs, projects, publications and public email addresses are also
-checked against their downloaded official source.
+Researchers are scored from `0–100` using their research interests from the official university profile.
 
-Unsupported claims are removed without rejecting an otherwise valid
-researcher.
+```text
+Final score =
+70% direct topic match
++
+30% related-topic match
+```
 
-The verification timestamp and number of verified source pages are stored
-for each researcher.
+### Direct match — 70%
 
-This step does not perform additional web searches or LLM calls.
+Compares the user's original search topic directly with the researcher's listed research interests.
 
----
+Example:
 
-## Research profile organisation
+```text
+User topic:
+Machine Learning
 
-Verified researcher information is separated into:
+Research interest:
+Machine Learning
+```
 
-- General research interests
-- Current projects
-- Previous projects
-- Projects with unknown status
+This produces a strong direct match.
 
-Project status is determined only from explicit evidence in official
-university content.
+### Related-topic match — 30%
 
-Current-status phrases such as "currently", "ongoing" and "is leading" are
-treated as current evidence.
+The topic-expansion stage generates closely related research concepts.
 
-Previous-status phrases such as "previously", "completed" and "concluded"
-are treated as previous evidence.
+These related topics are compared with the researcher's official research interests.
 
-Explicit project year ranges may also be used.
+For example:
 
-When the evidence does not clearly establish project status, the project is
-stored as unknown rather than guessed.
+```text
+User topic:
+Reinforcement Learning
 
----
+Related topics:
+Machine Learning
+Artificial Intelligence
+Deep Reinforcement Learning
+```
 
-## Deterministic relevance scoring
+This helps identify researchers whose profiles use related academic terminology.
 
-Verified researcher profiles receive a relevance score from 0 to 100.
+Researchers with a final relevance score below `40` are excluded from the final ranking.
 
-The scoring weights are:
+## Result Ranking
 
-- Research interests: 40 points
-- Current projects: 25 points
-- Publications: 15 points
-- Research labs/groups: 10 points
-- Previous projects: 5 points
-- Projects with unknown status: 5 points
+Remaining researchers are ranked using:
 
-The original user research topic receives full matching weight.
+```text
+1. Overall relevance score
+2. Direct topic-match score
+3. Related-topic score
+4. Verified source count
+5. Researcher name
+6. University name
+```
 
-Expanded topics are also considered but receive slightly lower weight to
-reduce broad-topic false positives.
+The requested maximum number of strongest researchers is then returned.
 
-Scoring is deterministic and does not use an LLM.
+## Researcher Links
 
-Each result stores:
+Each result can include:
 
-- Total relevance score
-- Category score breakdown
-- Matched topic terms
-- Human-readable scoring explanation
+### Official University Profile
 
----
+The researcher's name links directly to the verified university profile used by the system.
 
-## Key modules
+### Google Scholar
 
-| Module | Purpose |
+The system searches for a Google Scholar author profile using the researcher's name and university.
+
+The Scholar link is displayed only when a valid Scholar profile URL is found.
+
+### Research-Degree Opportunities
+
+For each researcher's university, the system searches for one central page covering opportunities such as:
+
+```text
+PhD
+MRes
+Master by Research
+Masters by Research
+Graduate Research
+Higher Degree Research
+```
+
+The system searches once per university and reuses the result when multiple researchers belong to the same university.
+
+## Technology Stack
+
+| Technology | Purpose |
 |---|---|
-| `models.py` | Pydantic data models (`SearchRequest`, `ResearcherResult`, `RelevanceScore`, etc.) |
-| `config.py` | Environment-based settings (`LLM_PROVIDER`, API keys, search parameters) |
-| `llm.py` | LangChain chat model factory (Groq or Ollama) |
-| `university_directory.py` | Australian university lookup from a bundled JSON directory |
-| `topic_expansion.py` | LLM-based research topic expansion with fallback |
-| `search_queries.py` | Official university-domain query generation (`OfficialSearchQuery`) |
-| `web_search.py` | DDGS-backed free web search client with retries and deduplication |
-| `official_page_search.py` | Executes search queries, filters results to official domains |
-| `web_content.py` | Downloads and cleans official pages with httpx and BeautifulSoup |
-| `researcher_extraction.py` | LLM-based structured extraction of researcher candidates from pages |
-| `researcher_details.py` | LLM-based extraction of emails, labs, projects and publications; candidate enrichment |
-| `verification.py` | Deterministic verification of candidates against downloaded evidence |
-| `research_profile.py` | Deterministic project status classification and researcher profile organisation |
-| `relevance.py` | Deterministic relevance scoring of profiles using weighted lexical intersection |
-| `nodes.py` | LangGraph node functions |
-| `routes.py` | Conditional routing functions |
-| `graph.py` | LangGraph graph assembly and compilation |
-| `state.py` | `ResearchGraphState`, `ResearchGraphInput`, `ResearchGraphOutput` |
-
----
-
-## Technology stack
-
-| Tool | Role |
-|---|---|
-| Python 3.12 | Language |
+| Python 3.12 | Application language |
 | LangGraph | Workflow orchestration |
-| Pydantic | Data validation and modelling |
-| LangChain (Groq / Ollama) | LLM integration |
-| DDGS | Free web search |
-| httpx | HTTP page downloads |
-| BeautifulSoup4 | HTML cleaning and text extraction |
-| pycountry | ISO country and state validation |
-| Pytest | Testing |
-| Ruff | Linting and formatting |
+| LangChain | LLM integration |
+| Groq / Ollama | LLM providers |
+| Pydantic | Structured data validation |
+| DDGS | Web search |
+| httpx | University webpage downloading |
+| BeautifulSoup4 | HTML cleaning |
+| pycountry | Location validation |
+| Streamlit | User interface |
+| Pytest | Automated testing |
+| Ruff | Code quality |
 
----
+## Project Structure
 
-## Configuration
-
-Copy `.env.example` to `.env` and set:
-
-```ini
-LLM_PROVIDER=groq          # or ollama
-GROQ_API_KEY=your-key-here
-
-# Optional overrides
-GROQ_MODEL=openai/gpt-oss-20b
-LLM_TEMPERATURE=0.0
-LLM_TIMEOUT_SECONDS=60
-LLM_MAX_RETRIES=2
-
-SEARCH_REGION=au-en
-SEARCH_SAFESEARCH=moderate
-SEARCH_TIMEOUT_SECONDS=15
-SEARCH_MAX_RETRIES=2
-SEARCH_MAX_RESULTS=10
+```text
+supervisor-finder/
+│
+├── app.py
+├── pyproject.toml
+├── README.md
+│
+├── src/
+│   └── research_finder/
+│       ├── config.py
+│       ├── deduplication.py
+│       ├── graph.py
+│       ├── llm.py
+│       ├── location.py
+│       ├── models.py
+│       ├── nodes.py
+│       ├── official_page_search.py
+│       ├── ranking.py
+│       ├── relevance.py
+│       ├── research_projects.py
+│       ├── researcher_extraction.py
+│       ├── routes.py
+│       ├── scholar.py
+│       ├── search_queries.py
+│       ├── search_strategy.py
+│       ├── state.py
+│       ├── topic_expansion.py
+│       ├── university_directory.py
+│       ├── verification.py
+│       ├── web_content.py
+│       └── web_search.py
+│
+└── tests/
 ```
 
----
 
-## Development
 
-### Setup
+## Design Principles
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+The project intentionally keeps the workflow simple.
+
+The system does not attempt to build a complete academic knowledge graph or scrape entire university websites.
+
+Its core objective is:
+
+```text
+Research topic
+    ↓
+Official university researcher profiles
+    ↓
+Verified researcher interests
+    ↓
+Relevant ranked researchers
 ```
 
-### Run tests
 
-```bash
-pytest
-```
+The official researcher profile remains the primary evidence source.
 
-### Diagnostic scripts
+## Current Limitations
 
-Run any script directly to verify a specific layer against real APIs:
+The project currently focuses on Australian universities.
 
-| Script | What it checks |
-|---|---|
-| `scripts/check_llm.py` | LLM connection and topic expansion |
-| `scripts/check_web_search.py` | DDGS web search |
-| `scripts/check_search_queries.py` | Query generation for Victorian universities |
-| `scripts/check_official_page_search.py` | End-to-end search for official researcher pages |
-| `scripts/check_web_content.py` | Page download and text extraction |
-| `scripts/check_topic_expansion.py` | Full topic expansion via LLM |
-| `scripts/check_researcher_extraction.py` | Structured researcher extraction from a real page |
-| `scripts/check_researcher_details.py` | Detail extraction and enrichment for Deakin University |
-| `scripts/check_verification.py` | Deterministic verification against a fixed candidate and document |
+Researcher discovery depends on publicly indexed university webpages and web-search results, so it may not discover every relevant researcher at a university.
 
-```bash
-python scripts/check_web_content.py
-```
+Some university websites block automated page access or expose profile information using JavaScript, which can reduce extraction coverage.
 
----
+Google Scholar profiles are not guaranteed to be discovered for every researcher.
 
-## Data model overview
+LLM providers can also enforce request or token rate limits during large searches.
 
-```
-ResearcherResult
-├── researcher_name, university_name, lab_or_group_name
-├── general_research_interests
-├── current_projects  ──→ list[ResearchProject]
-├── previous_projects ──→ list[ResearchProject]
-├── relevant_publications ──→ list[Publication]
-├── match_explanation
-├── relevance_score ──→ RelevanceScore
-│     (topic_similarity + publication_relevance +
-│      current_project_relevance + lab_relevance +
-│      evidence_strength + information_recency)
-├── official_profile_url, lab_or_group_url, public_email
-└── sources ──→ list[EvidenceSource]
-      (university_profile | lab_page | project_page |
-       publication_page | university_directory | other_official_source)
-```
+Search quality therefore prioritises verified results over claiming complete coverage.
 
-Unknown fields are left `None` rather than invented. Every result must have
-at least one supporting `EvidenceSource` from an official university domain.
+## Future Improvements
+
+Potential improvements include:
+
+- improve researcher-search recall for broad topics
+- reduce end-to-end search time
+- parallelise safe web-search and download operations
+- improve university profile discovery
+- add more countries
+- deploy the application publicly
+
+## License
+
+This project is currently provided for educational   purpose.
