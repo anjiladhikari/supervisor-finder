@@ -15,30 +15,31 @@ from research_finder.university_directory import (
 
 
 class SearchTarget(StrEnum):
-    """Types of official university pages to search."""
+    """Official page type searched by the application."""
 
     RESEARCHER = "researcher"
-    LAB = "lab"
-    PROJECT = "project"
-    PUBLICATION = "publication"
 
 
 class OfficialSearchQuery(StrictModel):
-    """One domain-restricted university search query."""
+    """One university-domain researcher search query."""
 
     university_name: str = Field(
         min_length=2,
         max_length=200,
     )
+
     official_domain: str = Field(
         min_length=4,
         max_length=255,
     )
+
     target: SearchTarget
+
     topics: list[str] = Field(
         min_length=1,
         max_length=2,
     )
+
     query: str = Field(
         min_length=10,
         max_length=500,
@@ -57,7 +58,9 @@ class OfficialSearchQuery(StrictModel):
         """Collapse repeated whitespace."""
 
         if isinstance(value, str):
-            return " ".join(value.split())
+            return " ".join(
+                value.split()
+            )
 
         return value
 
@@ -70,68 +73,92 @@ class OfficialSearchQuery(StrictModel):
         cls,
         value: object,
     ) -> object:
-        """Normalise the official root domain."""
+        """Normalise the university domain."""
 
         if isinstance(value, str):
-            return value.strip().casefold().removeprefix("www.")
+            return (
+                value.strip()
+                .casefold()
+                .removeprefix("www.")
+            )
 
         return value
 
-    @model_validator(mode="after")
+    @model_validator(
+        mode="after"
+    )
     def validate_domain_filter(
         self,
     ) -> OfficialSearchQuery:
-        """Ensure the query starts with its official domain."""
+        """Require domain-restricted search."""
 
-        expected_prefix = f"site:{self.official_domain} "
+        expected_prefix = (
+            f"site:{self.official_domain} "
+        )
 
-        if not self.query.casefold().startswith(expected_prefix.casefold()):
-            raise ValueError("query must begin with the official university domain.")
+        if not self.query.casefold().startswith(
+            expected_prefix.casefold()
+        ):
+            raise ValueError(
+                "query must begin with the "
+                "official university domain."
+            )
 
         return self
 
 
-_TARGET_CLAUSES = {
-    SearchTarget.RESEARCHER: ("(researcher OR professor OR academic)"),
-    SearchTarget.LAB: ('("research group" OR "research lab" OR laboratory)'),
-    SearchTarget.PROJECT: ("(project OR grant OR funded)"),
-    SearchTarget.PUBLICATION: ("(publication OR paper OR journal)"),
-}
+_RESEARCHER_CLAUSE = (
+    '(researcher OR professor OR "research profile")'
+)
 
 
-def _clean_topic(topic: str) -> str:
-    """Clean a topic before placing it inside quotes."""
+def _clean_topic(
+    topic: str,
+) -> str:
+    """Clean a topic before quoting it."""
 
-    return " ".join(topic.replace('"', "").split())
+    return " ".join(
+        topic.replace(
+            '"',
+            "",
+        ).split()
+    )
 
 
 def select_query_topics(
     topics: list[str],
     limit: int = 2,
 ) -> list[str]:
-    """Select the first unique topics in priority order."""
+    """Select unique topics in priority order."""
 
-    selected_topics: list[str] = []
-    seen_topics: set[str] = set()
+    selected: list[str] = []
+    seen: set[str] = set()
 
     for topic in topics:
-        cleaned_topic = _clean_topic(topic)
+        cleaned = _clean_topic(
+            topic
+        )
 
-        if not cleaned_topic:
+        if not cleaned:
             continue
 
-        comparison_key = cleaned_topic.casefold()
+        key = cleaned.casefold()
 
-        if comparison_key in seen_topics:
+        if key in seen:
             continue
 
-        seen_topics.add(comparison_key)
-        selected_topics.append(cleaned_topic)
+        seen.add(
+            key
+        )
 
-        if len(selected_topics) >= limit:
+        selected.append(
+            cleaned
+        )
+
+        if len(selected) >= limit:
             break
 
-    return selected_topics
+    return selected
 
 
 def build_official_search_query(
@@ -139,32 +166,54 @@ def build_official_search_query(
     target: SearchTarget,
     topics: list[str],
 ) -> OfficialSearchQuery:
-    """Build one query restricted to a university domain."""
+    """Build one researcher query for a university."""
 
-    selected_topics = select_query_topics(topics)
+    selected_topics = (
+        select_query_topics(
+            topics
+        )
+    )
 
     if not selected_topics:
-        raise ValueError("At least one research topic is required.")
+        raise ValueError(
+            "At least one research topic is required."
+        )
 
     if len(selected_topics) == 1:
-        topic_clause = f'"{selected_topics[0]}"'
+        topic_clause = (
+            f'"{selected_topics[0]}"'
+        )
+
     else:
-        topic_clause = f'("{selected_topics[0]}" OR "{selected_topics[1]}")'
+        topic_clause = (
+            f'("{selected_topics[0]}" OR '
+            f'"{selected_topics[1]}")'
+        )
 
-    target_clause = _TARGET_CLAUSES[target]
+    query = (
+        f"site:{university.official_domain} "
+        f"{topic_clause} "
+        f"{_RESEARCHER_CLAUSE}"
+    )
 
-    query = f"site:{university.official_domain} {topic_clause} {target_clause}"
-
-    # A single topic always fits the Step 7
-    # WebSearchRequest maximum more safely.
     if len(query) > 500:
-        selected_topics = selected_topics[:1]
+        selected_topics = (
+            selected_topics[:1]
+        )
 
-        query = f'site:{university.official_domain} "{selected_topics[0]}" {target_clause}'
+        query = (
+            f"site:{university.official_domain} "
+            f'"{selected_topics[0]}" '
+            f"{_RESEARCHER_CLAUSE}"
+        )
 
     return OfficialSearchQuery(
-        university_name=university.name,
-        official_domain=(university.official_domain),
+        university_name=(
+            university.name
+        ),
+        official_domain=(
+            university.official_domain
+        ),
         target=target,
         topics=selected_topics,
         query=query,
@@ -172,21 +221,22 @@ def build_official_search_query(
 
 
 def generate_official_search_queries(
-    universities: list[UniversityRecord],
+    universities: list[
+        UniversityRecord
+    ],
     topics: list[str],
-) -> list[OfficialSearchQuery]:
-    """Generate four official queries per university."""
+) -> list[
+    OfficialSearchQuery
+]:
+    """Generate one researcher query per university."""
 
-    queries: list[OfficialSearchQuery] = []
-
-    for university in universities:
-        for target in SearchTarget:
-            queries.append(
-                build_official_search_query(
-                    university=university,
-                    target=target,
-                    topics=topics,
-                )
-            )
-
-    return queries
+    return [
+        build_official_search_query(
+            university=university,
+            target=(
+                SearchTarget.RESEARCHER
+            ),
+            topics=topics,
+        )
+        for university in universities
+    ]
