@@ -65,8 +65,10 @@ from research_finder.web_search import (
 )
 
 
-def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
-    """Create predictable initial values for the workflow."""
+def initialize_workflow(
+    _: ResearchGraphState,
+) -> dict[str, object]:
+    """Create predictable initial workflow values."""
 
     return {
         "request": None,
@@ -75,17 +77,9 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
         "candidate_universities": [],
         "search_queries": [],
         "researcher_pages": [],
-        "lab_pages": [],
-        "project_pages": [],
-        "publication_pages": [],
         "researcher_documents": [],
-        "lab_documents": [],
-        "project_documents": [],
-        "publication_documents": [],
         "extracted_candidates": [],
-        "enriched_candidates": [],
         "verified_results": [],
-        "organised_results": [],
         "scored_results": [],
         "deduplicated_results": [],
         "ranked_results": [],
@@ -94,14 +88,16 @@ def initialize_workflow(_: ResearchGraphState) -> dict[str, object]:
         "active_search_topics": [],
         "search_attempt_count": 0,
         "download_attempt_count": 0,
-
         "final_response": None,
         "errors": [],
         "warnings": [],
-        "execution_log": ["Workflow initialized."],
+        "execution_log": [
+            "Workflow initialized."
+        ],
     }
 
 
+    
 def validate_input(
     state: ResearchGraphState,
 ) -> dict[str, object]:
