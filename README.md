@@ -315,7 +315,10 @@ Google Scholar profiles are not guaranteed to be discovered for every researcher
 
 LLM providers can also enforce request or token rate limits during large searches.
 
-Search quality therefore prioritises verified results over claiming complete coverage.
+**Search time can currently be long. A broad search may take around 14–15 minutes because the system searches multiple universities, downloads profile pages, runs LLM extraction, verifies candidates, and performs enrichment searches.**
+
+Search quality therefore prioritises **verified and trustworthy results over speed or claiming complete researcher coverage**.
+
 
 ## Future Improvements
 
@@ -326,7 +329,7 @@ Potential improvements include:
 - parallelise safe web-search and download operations
 - improve university profile discovery
 - add more countries
-- deploy the application publicly
+
 
 ## License
 
