@@ -17,53 +17,39 @@ class FakeSearchClient:
                     "Available research projects"
                 ),
                 url=(
-                    "https://www.utas.edu.au/"
-                    "research/degrees/"
-                    "available-projects"
+                    "https://www.monash.edu/"
+                    "medicine/scs/"
+                    "available-research-projects"
                 ),
                 snippet=(
-                    "Explore available PhD "
-                    "and research degree projects."
+                    "Available PhD and graduate "
+                    "research projects."
                 ),
                 rank=1,
             ),
             WebSearchResult(
-                title=(
-                    "One individual PhD project"
-                ),
+                title="Graduate Research",
                 url=(
-                    "https://www.utas.edu.au/"
-                    "research/project/example"
+                    "https://www.monash.edu/"
+                    "graduate-research"
                 ),
                 snippet=(
-                    "Individual PhD project."
+                    "PhD, Master's by Research "
+                    "and available projects."
                 ),
                 rank=2,
-            ),
-            WebSearchResult(
-                title=(
-                    "Wrong university"
-                ),
-                url=(
-                    "https://example.com/"
-                    "available-projects"
-                ),
-                snippet=(
-                    "Available research projects."
-                ),
-                rank=3,
             ),
         ]
 
 
-def test_finds_central_research_degree_portal() -> None:
+def test_prefers_central_university_portal() -> None:
     portal = (
         find_research_degree_portal(
             university_name=(
-                "University of Tasmania"
+                "Monash University"
             ),
             official_domain=(
-                "utas.edu.au"
+                "monash.edu"
             ),
             client=FakeSearchClient(),
         )
@@ -73,14 +59,13 @@ def test_finds_central_research_degree_portal() -> None:
 
     assert (
         portal.title
-        == "Available research projects"
+        == "Graduate Research"
     )
 
     assert (
         str(portal.url)
         == (
-            "https://www.utas.edu.au/"
-            "research/degrees/"
-            "available-projects"
+            "https://www.monash.edu/"
+            "graduate-research"
         )
     )

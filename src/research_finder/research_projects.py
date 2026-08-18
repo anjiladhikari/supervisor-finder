@@ -12,7 +12,7 @@ from research_finder.web_search import (
 
 
 class ResearchDegreePortal(StrictModel):
-    """Central university page for research-degree project opportunities."""
+    """Central university research-degree page."""
 
     title: str
     url: HttpUrl
@@ -22,7 +22,7 @@ def _is_official_university_url(
     url: str,
     official_domain: str,
 ) -> bool:
-    """Check that a URL belongs to the researcher's university."""
+    """Accept only the university's official domain."""
 
     hostname = (
         urlparse(url).hostname or ""
@@ -47,46 +47,90 @@ def _portal_score(
     url: str,
     snippet: str,
 ) -> int:
-    """Prefer central pages that list available research projects."""
+    """Prefer central university research-degree pages."""
 
-    text = " ".join(
-        [
-            title,
-            url,
-            snippet,
-        ]
-    ).casefold()
+    title_text = title.casefold()
+
+    parsed = urlparse(url)
+
+    path = (
+        parsed.path.casefold()
+        .replace("_", "-")
+    )
+
+    snippet_text = snippet.casefold()
 
     score = 0
 
-    strong_phrases = {
-        "available research projects": 20,
-        "available projects": 18,
-        "research project opportunities": 18,
-        "find a research project": 18,
-        "graduate research projects": 16,
-        "phd projects": 15,
-        "research degree projects": 15,
-    }
+    # Strong central university signals.
+    if "graduate research" in title_text:
+        score += 50
 
-    supporting_phrases = {
-        "higher degree research": 6,
-        "graduate research": 6,
-        "research degrees": 6,
-        "research degree": 5,
-        "master by research": 5,
-        "masters by research": 5,
-        "mres": 4,
-        "phd": 3,
-    }
+    if "research degrees" in title_text:
+        score += 45
 
-    for phrase, points in strong_phrases.items():
-        if phrase in text:
-            score += points
+    if "research degree" in title_text:
+        score += 40
 
-    for phrase, points in supporting_phrases.items():
-        if phrase in text:
-            score += points
+    if "higher degree research" in title_text:
+        score += 40
+
+    if "available research projects" in title_text:
+        score += 25
+
+    if "available projects" in title_text:
+        score += 20
+
+    # Strong URL signals.
+    if "/graduate-research" in path:
+        score += 50
+
+    if "research-degrees" in path:
+        score += 40
+
+    if "higher-degree-research" in path:
+        score += 40
+
+    if "available-projects" in path:
+        score += 25
+
+    if "available-research-projects" in path:
+        score += 20
+
+    # Small supporting evidence only.
+    if "phd" in snippet_text:
+        score += 5
+
+    if (
+        "master by research" in snippet_text
+        or "masters by research" in snippet_text
+        or "master's by research" in snippet_text
+    ):
+        score += 5
+
+    # Penalise faculty / school / clinical pages.
+    non_central_markers = (
+        "clinical",
+        "faculty of",
+        "school of",
+        "department of",
+        "institute",
+        "hospital",
+        "/medicine/",
+        "/engineering/",
+        "/business/",
+        "/faculty/",
+        "/school/",
+        "/department/",
+    )
+
+    combined = (
+        f"{title_text} {path}"
+    )
+
+    for marker in non_central_markers:
+        if marker in combined:
+            score -= 40
 
     return score
 
@@ -97,30 +141,25 @@ def find_research_degree_portal(
     official_domain: str,
     client: WebSearchClient,
 ) -> ResearchDegreePortal | None:
-    """Find one central research-degree projects page for a university."""
+    """Find one main university research-degree portal."""
 
     query = (
         f"site:{official_domain} "
         "("
-        '"available research projects" OR '
-        '"available projects" OR '
-        '"research project opportunities" OR '
-        '"find a research project" OR '
-        '"graduate research projects" OR '
-        '"PhD projects"'
+        '"graduate research" OR '
+        '"research degrees" OR '
+        '"higher degree research"'
         ") "
         "("
-        '"research degree" OR '
-        '"higher degree research" OR '
-        '"graduate research" OR '
+        '"available projects" OR '
+        '"available research projects" OR '
+        '"find a project" OR '
         '"PhD" OR '
         '"Master by Research" OR '
         '"Masters by Research"'
         ")"
     )
 
-    # These five results are only candidates.
-    # We still return ONE central university page.
     results = client.search(
         WebSearchRequest(
             query=query,
@@ -132,7 +171,9 @@ def find_research_degree_portal(
     best_score = 0
 
     for result in results:
-        url = str(result.url)
+        url = str(
+            result.url
+        )
 
         if not _is_official_university_url(
             url,
@@ -150,7 +191,12 @@ def find_research_degree_portal(
             best_score = score
             best_result = result
 
-    if best_result is None:
+    # Better to show "not found"
+    # than return an unrelated page.
+    if (
+        best_result is None
+        or best_score < 30
+    ):
         return None
 
     return ResearchDegreePortal(
@@ -158,7 +204,7 @@ def find_research_degree_portal(
             best_result.title
             or (
                 f"{university_name} "
-                "research-degree projects"
+                "Graduate Research"
             )
         ),
         url=best_result.url,
