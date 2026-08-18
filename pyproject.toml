@@ -3,24 +3,24 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "research-supervisor-lab-finder"
+name = "supervisor-finder"
 version = "0.1.0"
-description = "An evidence-based AI workflow for finding research supervisors and labs."
+description = "A LangGraph workflow for finding Australian university researchers by research topic."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
+
 dependencies = [
-   "langgraph",
+    "langgraph",
     "langchain-core",
     "langchain-groq",
     "langchain-ollama",
-    "pydantic[email]",
+    "pydantic",
     "pydantic-settings",
     "pycountry",
     "ddgs",
     "httpx",
     "beautifulsoup4",
     "streamlit",
-    
 ]
 
 [project.optional-dependencies]
@@ -31,10 +31,12 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
 [tool.setuptools.package-data]
 research_finder = [
     "data/universities/*.json",
 ]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
