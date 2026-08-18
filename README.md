@@ -53,6 +53,27 @@ Official university profile
 Google Scholar
 University research-degree opportunities
 ```
+## Architecture
+
+```mermaid
+flowchart TD
+    A[User - Streamlit] --> B[Validate Input]
+    B --> C[Expand Research Topic<br/>LangChain + LLM]
+    C --> D[Find Universities]
+    D --> E[Generate Official-Domain Queries]
+    E --> F[Search Researcher Profiles]
+    F --> G{Enough search results?}
+    G -- No --> H[Broaden / Narrow Search]
+    H --> E
+    G -- Yes --> I[Download University Pages]
+    I --> J[Detect + Extract Researcher<br/>LangChain + LLM]
+    J --> K[Location + Evidence Verification]
+    K --> L[Topic Match Scoring<br/>70% Direct + 30% Related]
+    L --> M[Google Scholar]
+    M --> N[Research Degree Portal]
+    N --> O[Deduplicate + Rank]
+    O --> P[Streamlit Results]
+```
 
 ## How It Works
 
