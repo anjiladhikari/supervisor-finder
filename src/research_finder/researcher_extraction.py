@@ -47,6 +47,24 @@ class ResearcherExtractionDraft(StrictModel):
         ),
     )
 
+    profile_state: str | None = Field(
+        max_length=100,
+        description=(
+            "Current Australian state of the researcher's "
+            "university affiliation, only when explicitly "
+            "supported by the page. Otherwise null."
+        ),
+    )
+
+    profile_country: str | None = Field(
+        max_length=100,
+        description=(
+            "Current country of the researcher's university "
+            "affiliation, only when explicitly supported by "
+            "the page. Otherwise null."
+    ),
+)
+
 class ResearcherExtractionBatch(StrictModel):
     """Researcher extracted from one personal university profile page."""
 
@@ -95,7 +113,16 @@ class ResearcherCandidate(StrictModel):
         min_length=5,
         max_length=500,
     )
+    profile_state: str | None = Field(
+        
+        default=None,
+        max_length=100,
+    )
 
+    profile_country: str | None = Field(
+        default=None,
+        max_length=100,
+    )
 
 @dataclass(frozen=True)
 class ResearcherExtractionOutcome:
@@ -150,6 +177,9 @@ Rules:
 7. Keep research interests short and specific.
 
 8. Do not extract projects, publications, labs or email addresses here.
+11. Extract the researcher's current institutional state and country only when the page explicitly supports them.
+12. Location must refer to the profile owner's current affiliation, not another campus or university mentioned on the page.
+13. For Australian states, use the full state name such as Victoria, New South Wales or Tasmania.
 """.strip()
 
 
