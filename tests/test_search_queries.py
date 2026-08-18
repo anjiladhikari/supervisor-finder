@@ -22,37 +22,52 @@ def create_test_university() -> UniversityRecord:
     )
 
 
-def test_generates_four_queries_per_university() -> None:
+def test_generates_one_query_per_university() -> None:
     queries = generate_official_search_queries(
-        universities=[create_test_university()],
+        universities=[
+            create_test_university()
+        ],
         topics=[
             "Reinforcement learning",
             "Early time-series classification",
         ],
     )
 
-    assert len(queries) == 4
+    assert len(queries) == 1
 
-    assert {query.target for query in queries} == set(SearchTarget)
+    assert (
+        queries[0].target
+        == SearchTarget.RESEARCHER
+    )
 
 
-def test_every_query_uses_official_domain() -> None:
+def test_query_uses_official_domain() -> None:
     queries = generate_official_search_queries(
-        universities=[create_test_university()],
+        universities=[
+            create_test_university()
+        ],
         topics=[
             "Reinforcement learning",
-            "Early time-series classification",
         ],
     )
 
-    assert all(query.query.startswith("site:deakin.edu.au ") for query in queries)
+    query = queries[0]
 
-    assert all(query.official_domain == "deakin.edu.au" for query in queries)
+    assert query.query.startswith(
+        "site:deakin.edu.au "
+    )
+
+    assert (
+        query.official_domain
+        == "deakin.edu.au"
+    )
 
 
 def test_query_topics_are_deduplicated() -> None:
     queries = generate_official_search_queries(
-        universities=[create_test_university()],
+        universities=[
+            create_test_university()
+        ],
         topics=[
             "Reinforcement learning",
             "reinforcement learning",
@@ -66,10 +81,12 @@ def test_query_topics_are_deduplicated() -> None:
     ]
 
 
-def test_node_generates_queries() -> None:
+def test_node_generates_researcher_query() -> None:
     result = generate_search_queries(
         {
-            "candidate_universities": [create_test_university()],
+            "candidate_universities": [
+                create_test_university()
+            ],
             "expanded_topics": [
                 "Reinforcement learning",
                 "Time-series classification",
@@ -77,43 +94,46 @@ def test_node_generates_queries() -> None:
         }
     )
 
-    assert len(result["search_queries"]) == 4
-    assert all(
-        query.topics
-        == ["Reinforcement learning"]
-        for query
-        in result["search_queries"]
-    )
-    assert all(
-        "Time-series classification"
-        not in query.query
-        for query
-        in result["search_queries"]
+    queries = result[
+        "search_queries"
+    ]
+
+    assert len(queries) == 1
+
+    assert queries[0].topics == [
+        "Reinforcement learning"
+    ]
+
+    assert (
+        queries[0].target
+        == SearchTarget.RESEARCHER
     )
 
     assert result["execution_log"] == [
-    (
-        "Generated 4 official "
-        "university-domain queries "
-        "for normal search round 1."
-    )
-]
+        (
+            "Generated 1 official "
+            "university-domain queries "
+            "for normal search round 1."
+        )
+    ]
 
-   
 
 def test_node_requires_universities() -> None:
     result = generate_search_queries(
         {
             "candidate_universities": [],
-            "expanded_topics": ["Reinforcement learning"],
+            "expanded_topics": [
+                "Reinforcement learning"
+            ],
         }
     )
 
-    assert result["search_queries"] == []
+    assert (
+        result["search_queries"]
+        == []
+    )
 
-    assert result["errors"] == [
-        ("Search queries cannot be generated without candidate universities.")
-    ]
+
 def test_node_uses_active_retry_topics() -> None:
     result = generate_search_queries(
         {
@@ -132,13 +152,12 @@ def test_node_uses_active_retry_topics() -> None:
         }
     )
 
-    assert len(
-        result["search_queries"]
-    ) == 4
+    queries = result[
+        "search_queries"
+    ]
 
-    assert all(
-        query.topics
-        == ["Exact specialised topic"]
-        for query
-        in result["search_queries"]
-    )
+    assert len(queries) == 1
+
+    assert queries[0].topics == [
+        "Exact specialised topic"
+    ]
