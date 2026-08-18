@@ -97,7 +97,6 @@ def initialize_workflow(
     }
 
 
-    
 def validate_input(
     state: ResearchGraphState,
 ) -> dict[str, object]:
@@ -583,81 +582,75 @@ def search_researchers(
 
 
 
-
 def download_webpage_content(
     state: ResearchGraphState,
 ) -> dict[str, object]:
-    """Download and clean all discovered official pages."""
+    """Download discovered researcher profile pages."""
 
-    page_groups = (
-    (
-        "researcher_pages",
-        "researcher_documents",
-    ),
-)
+    pages = list(
+        state.get(
+            "researcher_pages",
+            [],
+        )
+    )
 
-    all_pages = [page for page_key, _ in page_groups for page in state.get(page_key, [])]
-
-    if not all_pages:
+    if not pages:
         return {
             "researcher_documents": [],
-            "lab_documents": [],
-            "project_documents": [],
-            "publication_documents": [],
-            "download_attempt_count": (
-                state.get(
-                    "download_attempt_count",
-                    0,
-                )
+            "download_attempt_count": state.get(
+                "download_attempt_count",
+                0,
             ),
-            "warnings": [("No official pages were available for webpage download.")],
+            "warnings": [
+                "No researcher pages were available for webpage download."
+            ],
             "execution_log": [
-                ("Webpage download completed: 0 pages attempted, 0 documents created.")
+                (
+                    "Webpage download completed: "
+                    "0 pages attempted, "
+                    "0 documents created."
+                )
             ],
         }
 
     downloader = create_page_downloader()
 
-    result: dict[str, object] = {}
-    attempted_pages = 0
-    failed_pages = 0
-    document_count = 0
-
-    for page_key, document_key in page_groups:
-        pages = list(state.get(page_key, []))
-
-        outcome = download_official_pages(
-            pages=pages,
-            downloader=downloader,
-        )
-
-        result[document_key] = list(outcome.documents)
-        attempted_pages += outcome.attempted_pages
-        failed_pages += outcome.failed_pages
-        document_count += len(outcome.documents)
-
-    result["download_attempt_count"] = (
-        state.get(
-            "download_attempt_count",
-            0,
-        )
-        + attempted_pages
+    outcome = download_official_pages(
+        pages=pages,
+        downloader=downloader,
     )
 
-    if failed_pages:
+    result: dict[str, object] = {
+        "researcher_documents": list(
+            outcome.documents
+        ),
+        "download_attempt_count": (
+            state.get(
+                "download_attempt_count",
+                0,
+            )
+            + outcome.attempted_pages
+        ),
+        "execution_log": [
+            (
+                "Webpage download completed: "
+                f"{outcome.attempted_pages} pages attempted, "
+                f"{len(outcome.documents)} documents created."
+            )
+        ],
+    }
+
+    if outcome.failed_pages:
         result["warnings"] = [
-            (f"Webpage download failed for {failed_pages} of {attempted_pages} pages.")
+            (
+                "Webpage download failed for "
+                f"{outcome.failed_pages} of "
+                f"{outcome.attempted_pages} pages."
+            )
         ]
 
-    result["execution_log"] = [
-        (
-            "Webpage download completed: "
-            f"{attempted_pages} pages attempted, "
-            f"{document_count} documents created."
-        )
-    ]
-
     return result
+
 
 def extract_researcher_information(
     state: ResearchGraphState,
@@ -781,25 +774,28 @@ def verify_current_affiliation(
                 ("Researcher verification completed: 0 candidates checked, 0 verified.")
             ],
         }
-
-    documents = [
-        *state.get(
+    documents = list(
+        state.get(
             "researcher_documents",
             [],
-        ),
-        *state.get(
-            "lab_documents",
-            [],
-        ),
-        *state.get(
-            "project_documents",
-            [],
-        ),
-        *state.get(
-            "publication_documents",
-            [],
-        ),
-    ]
+        )
+    )
+
+    if not documents:
+        return {
+            "verified_results": [],
+            "warnings": [
+                "No researcher documents were available for verification."
+            ],
+            "execution_log": [
+                (
+                    "Researcher verification completed: "
+                    "0 documents processed, "
+                    "0 candidates verified."
+                )
+            ],
+        }
+
 
     outcome = verify_researcher_candidates(
         candidates=candidates,
