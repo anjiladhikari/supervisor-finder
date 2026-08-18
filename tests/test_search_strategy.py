@@ -82,7 +82,7 @@ def test_reasonable_page_count_continues() -> None:
         has_errors=False,
     )
 
-    assert route == "search_labs"
+    assert route == "download_webpage_content"
 
 
 def test_too_many_pages_causes_narrow_retry() -> None:
