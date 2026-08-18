@@ -8,7 +8,9 @@ from research_finder.research_projects import (
     ResearchDegreePortal,
     find_research_degree_portal,
 )
-
+from research_finder.researcher_extraction import (
+    extract_researcher_documents,
+)
 from research_finder.deduplication import (
     deduplicate_scored_researchers,
 )
@@ -661,7 +663,6 @@ def download_webpage_content(
 
     return result
 
-
 def extract_researcher_information(
     state: ResearchGraphState,
 ) -> dict[str, object]:
@@ -677,9 +678,15 @@ def extract_researcher_information(
     if not documents:
         return {
             "extracted_candidates": [],
-            "warnings": [("No researcher documents were available for structured extraction.")],
+            "warnings": [
+                "No researcher documents were available for structured extraction."
+            ],
             "execution_log": [
-                ("Researcher extraction completed: 0 documents processed, 0 candidates created.")
+                (
+                    "Researcher extraction completed: "
+                    "0 documents processed, "
+                    "0 candidates created."
+                )
             ],
         }
 
@@ -690,24 +697,13 @@ def extract_researcher_information(
         model=model,
     )
 
-    result: dict[str, object] = {
-        "extracted_candidates": list(candidates),
-        "execution_log": [
-            (
-                "Researcher extraction completed: "
-                f"{outcome.attempted_documents} "
-                "documents processed, "
-                f"{len(candidates)} candidates retained."
-                "candidates created."
-            )
-        ],
-    }
-    
     candidates = list(
-    outcome.candidates
-)
+        outcome.candidates
+    )
 
-    request = state.get("request")
+    request = state.get(
+        "request"
+    )
 
     if request is not None:
         filtered_candidates = []
@@ -732,7 +728,20 @@ def extract_researcher_information(
                 candidate
             )
 
-    candidates = filtered_candidates
+        candidates = filtered_candidates
+
+    result: dict[str, object] = {
+        "extracted_candidates": candidates,
+        "execution_log": [
+            (
+                "Researcher extraction completed: "
+                f"{outcome.attempted_documents} "
+                "documents processed, "
+                f"{len(candidates)} "
+                "candidates retained."
+            )
+        ],
+    }
 
     if outcome.rate_limited:
         result["warnings"] = [
@@ -754,8 +763,6 @@ def extract_researcher_information(
         ]
 
     return result
-
-
 
 
 def verify_current_affiliation(
